@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
+<meta name="theme-color" content="#0D2B7E">
+<meta name="description" content="MP के 9 competitive exams की तैयारी — Quiz, Syllabus, Current Affairs, Dashboard। Offline।">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="MP Exam">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<title>MP Exam</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+:root {
+  --primary: #1A4BAD;
+  --primary-dark: #0D2B7E;
+  --primary-light: #E8F0FD;
+  --accent: #FF6B35;
+  --green: #1A7F37;
+  --green-bg: #DAFBE1;
+  --red: #CF222E;
+  --red-bg: #FFEBE9;
+  --amber: #9A6700;
+  --amber-bg: #FFF8C5;
+  --bg: #F6F8FA;
+  --bg2: #FFFFFF;
+  --border: #D0D7DE;
+  --fg: #1F2328;
+  --fg2: #636C76;
+  --fg3: #9198A1;
+  --sans: 'Inter', system-ui, sans-serif;
+  --deva: 'Noto Sans Devanagari', sans-serif;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --primary: #58A6FF;
+    --primary-dark: #1F6FEB;
+    --primary-light: #0D2B7E33;
+    --accent: #FF8C5A;
+    --green: #3FB950; --green-bg: #0D1117;
+    --red: #F85149; --red-bg: #1A0000;
+    --amber: #D29922; --amber-bg: #1A1200;
+    --bg: #0D1117; --bg2: #161B22;
+    --border: #30363D;
+    --fg: #E6EDF3; --fg2: #8B949E; --fg3: #656D76;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --primary: #58A6FF; --primary-dark: #1F6FEB; --primary-light: #0D2B7E33;
+  --accent: #FF8C5A;
+  --green: #3FB950; --green-bg: #0D1117;
+  --red: #F85149; --red-bg: #1A0000;
+  --amber: #D29922; --amber-bg: #1A1200;
+  --bg: #0D1117; --bg2: #161B22; --border: #30363D;
+  --fg: #E6EDF3; --fg2: #8B949E; --fg3: #656D76;
+  color-scheme: dark;
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;font-family:var(--sans);background:var(--bg);color:var(--fg);font-size:14px;line-height:1.5}
+.hi{font-family:var(--deva)}
+
+/* SCREEN SYSTEM */
+.screen{display:none;flex-direction:column;min-height:100%;background:var(--bg)}
+.screen.active{display:flex}
+
+/* SPLASH */
+#splash{background:linear-gradient(160deg,#0D2B7E 0%,#1A4BAD 65%,#FF6B35 100%);align-items:center;justify-content:center;min-height:100vh;gap:0}
+.splash-icon{width:90px;height:90px;background:rgba(255,255,255,0.15);border-radius:22px;display:flex;align-items:center;justify-content:center;font-size:44px;margin-bottom:20px;border:2px solid rgba(255,255,255,0.25)}
+.splash-title{font-size:36px;font-weight:700;color:#fff;letter-spacing:-0.5px}
+.splash-tag{font-size:12px;color:rgba(255,255,255,0.7);letter-spacing:3px;text-transform:uppercase;margin-top:6px;font-family:var(--deva)}
+.splash-bar{width:180px;height:3px;background:rgba(255,255,255,0.2);border-radius:2px;margin-top:48px;overflow:hidden}
+.splash-fill{height:100%;background:#fff;border-radius:2px;animation:loadbar 2.2s ease forwards}
+@keyframes loadbar{from{width:0}to{width:100%}}
+
+/* TOPBAR */
+.topbar{display:flex;align-items:center;gap:10px;padding:14px 16px;background:var(--bg2);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:10}
+.back-btn{width:34px;height:34px;border-radius:50%;background:var(--bg);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;flex-shrink:0}
+.topbar-title{font-size:15px;font-weight:600;color:var(--fg);flex:1;font-family:var(--deva)}
+.topbar-right{font-size:13px;color:var(--primary);font-weight:500;cursor:pointer}
+
+/* HERO BANNER */
+.hero{background:linear-gradient(135deg,#0D2B7E,#1A4BAD);padding:20px 16px 24px}
+.hero-greet{font-size:13px;color:rgba(255,255,255,0.7);font-family:var(--deva)}
+.hero-name{font-size:20px;font-weight:700;color:#fff;margin-top:2px;font-family:var(--deva)}
+.hero-streak{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,0.15);border-radius:20px;padding:5px 12px;margin-top:10px;font-size:13px;color:#fff;font-family:var(--deva)}
+
+/* STATS ROW */
+.stats-row{display:flex;gap:10px;padding:14px 16px 0}
+.stat-card{flex:1;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center}
+.stat-val{font-size:22px;font-weight:700;color:var(--fg);font-variant-numeric:tabular-nums}
+.stat-lbl{font-size:11px;color:var(--fg2);margin-top:2px;font-family:var(--deva)}
+
+/* SECTION TITLE */
+.sec-title{font-size:11px;font-weight:600;color:var(--fg3);text-transform:uppercase;letter-spacing:0.7px;padding:16px 16px 8px;font-family:var(--sans)}
+
+/* EXAM GRID */
+.exam-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 16px 8px}
+.exam-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:14px 12px;cursor:pointer;transition:border-color 0.15s}
+.exam-card:hover{border-color:var(--primary)}
+.exam-card-icon{font-size:24px;margin-bottom:8px}
+.exam-card-name{font-size:13px;font-weight:600;color:var(--fg);font-family:var(--deva)}
+.exam-card-sub{font-size:11px;color:var(--fg2);margin-top:2px;font-family:var(--deva)}
+
+/* BOTTOM NAV */
+.bottom-nav{display:flex;background:var(--bg2);border-top:1px solid var(--border);padding:8px 0 12px;margin-top:auto}
+.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;padding:4px 0}
+.nav-item .nav-icon{font-size:20px}
+.nav-item .nav-lbl{font-size:10px;color:var(--fg3);font-family:var(--deva)}
+.nav-item.active .nav-lbl{color:var(--primary)}
+.nav-item.active .nav-icon{filter:none}
+
+/* LIST ITEMS */
+.list-item{display:flex;align-items:center;gap:12px;padding:14px 16px;background:var(--bg2);border-bottom:1px solid var(--border);cursor:pointer}
+.list-item:hover{background:var(--bg)}
+.list-icon{width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.list-info{flex:1}
+.list-name{font-size:14px;font-weight:600;color:var(--fg);font-family:var(--deva)}
+.list-sub{font-size:12px;color:var(--fg2);margin-top:2px;font-family:var(--deva)}
+.badge{font-size:11px;font-weight:600;padding:3px 8px;border-radius:20px}
+.badge-blue{background:var(--primary-light);color:var(--primary)}
+.badge-green{background:var(--green-bg);color:var(--green)}
+.badge-amber{background:var(--amber-bg);color:var(--amber)}
+
+/* TEST TYPE CARDS */
+.tt-card{display:flex;align-items:center;gap:14px;padding:16px;background:var(--bg2);border:1px solid var(--border);border-radius:12px;margin:0 16px 10px;cursor:pointer;transition:border-color 0.15s}
+.tt-card:hover{border-color:var(--primary)}
+.tt-icon{width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+.tt-info{flex:1}
+.tt-title{font-size:14px;font-weight:600;color:var(--fg);font-family:var(--deva)}
+.tt-desc{font-size:12px;color:var(--fg2);margin-top:3px;font-family:var(--deva)}
+.syllabus-box{margin:0 16px 16px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:14px}
+.syllabus-title{font-size:12px;font-weight:600;color:var(--fg2);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px}
+.syllabus-tag{display:inline-block;font-size:11px;background:var(--primary-light);color:var(--primary);border-radius:5px;padding:3px 8px;margin:2px;font-family:var(--deva)}
+
+/* TOPIC LIST */
+.topic-item{display:flex;align-items:center;gap:12px;padding:13px 16px;border-bottom:1px solid var(--border);cursor:pointer;background:var(--bg2)}
+.topic-item:hover{background:var(--bg)}
+.topic-check{width:22px;height:22px;border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all 0.15s}
+.topic-check.sel{background:var(--primary);border-color:var(--primary);color:#fff}
+.topic-name{flex:1;font-size:14px;color:var(--fg);font-family:var(--deva)}
+.topic-q{font-size:12px;color:var(--fg3);font-variant-numeric:tabular-nums}
+.group-label{padding:10px 16px 4px;font-size:11px;font-weight:600;color:var(--fg3);text-transform:uppercase;letter-spacing:0.5px;background:var(--bg)}
+.start-bar{position:sticky;bottom:0;padding:12px 16px;background:var(--bg2);border-top:1px solid var(--border)}
+
+/* QUIZ */
+.quiz-meta{display:flex;align-items:center;gap:10px;padding:10px 16px;background:var(--bg2);border-bottom:1px solid var(--border)}
+.q-counter{font-size:13px;color:var(--fg2);font-variant-numeric:tabular-nums}
+.progress{flex:1;height:5px;background:var(--border);border-radius:3px;overflow:hidden}
+.progress-fill{height:100%;background:var(--primary);border-radius:3px;transition:width 0.3s}
+.timer{display:flex;align-items:center;gap:4px;background:var(--bg);border:1px solid var(--border);border-radius:20px;padding:4px 10px;font-size:13px;font-weight:600;font-variant-numeric:tabular-nums;color:var(--fg)}
+.quiz-body{padding:16px;flex:1;overflow-y:auto}
+.q-tag{display:inline-block;font-size:11px;font-weight:600;background:var(--primary-light);color:var(--primary);border-radius:5px;padding:3px 10px;margin-bottom:12px;font-family:var(--deva)}
+.q-text{font-size:15px;color:var(--fg);line-height:1.6;margin-bottom:18px;font-family:var(--deva)}
+.option{display:flex;align-items:center;gap:12px;padding:13px 14px;border:1.5px solid var(--border);border-radius:10px;margin-bottom:10px;cursor:pointer;background:var(--bg2);transition:all 0.15s}
+.option:hover{border-color:var(--primary)}
+.option.sel{border-color:var(--primary);background:var(--primary-light)}
+.option.correct{border-color:var(--green);background:var(--green-bg)}
+.option.wrong{border-color:var(--red);background:var(--red-bg)}
+.opt-letter{width:30px;height:30px;border-radius:50%;background:var(--bg);border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;flex-shrink:0;font-variant-numeric:tabular-nums}
+.option.sel .opt-letter{background:var(--primary);border-color:var(--primary);color:#fff}
+.option.correct .opt-letter{background:var(--green);border-color:var(--green);color:#fff}
+.option.wrong .opt-letter{background:var(--red);border-color:var(--red);color:#fff}
+.opt-text{font-size:14px;color:var(--fg);font-family:var(--deva)}
+.exp-box{background:var(--green-bg);border:1px solid var(--green);border-radius:8px;padding:12px 14px;margin-top:4px;display:none}
+.exp-box.show{display:block}
+.exp-title{font-size:12px;font-weight:600;color:var(--green);margin-bottom:4px;font-family:var(--deva)}
+.exp-text{font-size:13px;color:var(--fg);line-height:1.6;font-family:var(--deva)}
+.ad-strip{margin:0 16px 10px;padding:10px 14px;background:var(--amber-bg);border:1px solid var(--amber);border-radius:8px;display:none;align-items:center;gap:10px;cursor:pointer}
+.ad-strip.show{display:flex}
+.ad-strip-text{flex:1;font-size:13px;color:var(--amber);font-weight:500;font-family:var(--deva)}
+.ad-btn{font-size:12px;background:var(--amber);color:#fff;border-radius:20px;padding:4px 12px;font-weight:600;font-family:var(--deva)}
+.quiz-nav{display:flex;gap:10px;padding:12px 16px;background:var(--bg2);border-top:1px solid var(--border)}
+
+/* BUTTONS */
+.btn{height:44px;border-radius:10px;font-size:14px;font-weight:600;border:none;cursor:pointer;font-family:var(--deva);transition:opacity 0.15s}
+.btn:active{opacity:0.85}
+.btn-primary{background:var(--primary);color:#fff;width:100%}
+.btn-outline{background:var(--bg2);color:var(--fg);border:1.5px solid var(--border);flex:1}
+.btn-submit{background:var(--primary);color:#fff;flex:2}
+
+/* RESULT */
+.result-hero{background:linear-gradient(135deg,#0D2B7E,#1A4BAD);padding:28px 20px;text-align:center}
+.result-emoji{font-size:56px;margin-bottom:8px}
+.result-score{font-size:52px;font-weight:700;color:#fff;font-variant-numeric:tabular-nums}
+.result-total{font-size:18px;color:rgba(255,255,255,0.7);font-family:var(--deva)}
+.result-msg{font-size:14px;color:rgba(255,255,255,0.8);margin-top:8px;font-family:var(--deva)}
+.result-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:16px}
+.rs{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:14px 8px;text-align:center}
+.rs-val{font-size:22px;font-weight:700;font-variant-numeric:tabular-nums}
+.rs-lbl{font-size:11px;color:var(--fg2);margin-top:2px;font-family:var(--deva)}
+.weak-item{display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--border)}
+.weak-name{font-size:13px;color:var(--fg);flex:1;font-family:var(--deva)}
+.weak-bar{width:90px;height:6px;background:var(--border);border-radius:3px;overflow:hidden}
+.weak-fill{height:100%;border-radius:3px}
+.weak-pct{font-size:12px;color:var(--fg2);min-width:32px;text-align:right;font-variant-numeric:tabular-nums}
+.result-actions{display:flex;gap:10px;padding:16px}
+
+/* CURRENT AFFAIRS */
+.ca-filters{display:flex;gap:8px;padding:12px 16px;overflow-x:auto;background:var(--bg2);border-bottom:1px solid var(--border)}
+.ca-chip{flex-shrink:0;padding:6px 14px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:var(--bg);color:var(--fg2);font-family:var(--deva)}
+.ca-chip.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+.ca-list{padding:12px 16px;flex:1;overflow-y:auto}
+.ca-card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:10px}
+.ca-tag{display:inline-block;font-size:11px;font-weight:600;padding:2px 8px;border-radius:5px;margin-bottom:8px;font-family:var(--deva)}
+.ca-headline{font-size:14px;font-weight:600;color:var(--fg);line-height:1.5;font-family:var(--deva)}
+.ca-body{font-size:13px;color:var(--fg2);margin-top:6px;line-height:1.6;font-family:var(--deva)}
+.ca-footer{display:flex;justify-content:space-between;align-items:center;margin-top:10px}
+.ca-src{font-size:11px;color:var(--fg3)}
+.ca-quiz{font-size:12px;color:var(--primary);font-weight:600;cursor:pointer;font-family:var(--deva)}
+
+/* DASHBOARD */
+.dash-hero{background:linear-gradient(135deg,#0D2B7E,#1A4BAD);padding:20px 16px}
+.dash-avatar{width:52px;height:52px;border-radius:50%;background:rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;color:#fff;border:2px solid rgba(255,255,255,0.35)}
+.dash-mini-stats{display:flex;gap:8px;margin-top:14px}
+.dms{background:rgba(255,255,255,0.12);border-radius:8px;padding:8px 12px;flex:1;text-align:center}
+.dms-val{font-size:18px;font-weight:700;color:#fff;font-variant-numeric:tabular-nums}
+.dms-lbl{font-size:10px;color:rgba(255,255,255,0.65);font-family:var(--deva)}
+.dash-section{padding:14px 16px 6px;font-size:11px;font-weight:600;color:var(--fg3);text-transform:uppercase;letter-spacing:0.7px}
+.wt-item{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--border)}
+.wt-icon{width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.wt-name{flex:1;font-size:13px;color:var(--fg);font-family:var(--deva)}
+.wt-score{font-size:13px;font-weight:600;color:var(--red);font-variant-numeric:tabular-nums}
+
+/* NAME INPUT */
+.name-input-screen{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;background:linear-gradient(160deg,#0D2B7E,#1A4BAD);padding:32px 24px;text-align:center}
+.inp-box{background:rgba(255,255,255,0.12);border:1.5px solid rgba(255,255,255,0.3);border-radius:12px;padding:14px 16px;width:100%;font-size:16px;color:#fff;outline:none;font-family:var(--deva);margin-bottom:12px}
+.inp-box::placeholder{color:rgba(255,255,255,0.5)}
+.inp-box:focus{border-color:rgba(255,255,255,0.7)}
+
+/* SCROLLABLE BODY */
+.scroll-body{flex:1;overflow-y:auto}
+
+/* Safe areas (notch) */
+body{padding-top:env(safe-area-inset-top,0px)}
+.bottom-nav,.start-bar,.quiz-nav{padding-bottom:calc(12px + env(safe-area-inset-bottom,0px))}
+/* In-app dialog — browser confirm box WebView me nahi chalta */
+.dlg-bg{position:fixed;inset:0;background:rgba(0,0,0,0.5);display:none;align-items:center;justify-content:center;z-index:100;padding:24px}
+.dlg-bg.show{display:flex}
+.dlg{background:var(--bg2);border-radius:14px;padding:20px;width:100%;max-width:340px}
+.dlg-text{font-size:15px;color:var(--fg);font-family:var(--deva);margin-bottom:16px;line-height:1.5}
+.dlg-row{display:flex;gap:10px}
+.dlg-row .btn{flex:1}
+.btn-danger{background:var(--red);color:#fff}
+/* Install banner */
+.install-bar{display:none;align-items:center;gap:10px;margin:12px 16px 0;padding:12px 14px;background:var(--primary-light);border:1px solid var(--primary);border-radius:10px}
+.install-bar.show{display:flex}
+.install-text{flex:1;font-size:13px;color:var(--fg);font-family:var(--deva)}
+.install-btn{background:var(--primary);color:#fff;border:none;border-radius:20px;padding:6px 14px;font-weight:600;font-size:12px;font-family:var(--deva);cursor:pointer}
+.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:10px 18px;border-radius:20px;font-size:13px;font-family:var(--deva);display:none;z-index:200;white-space:nowrap}
+.toast.show{display:block}
+</style>
+</head>
+<body>
+
+<!-- ===== SPLASH ===== -->
+<div id="splash" class="screen active">
+  <div class="splash-icon">🏛️</div>
+  <div class="splash-title">MP Exam</div>
+  <div class="splash-tag hi">क्रैक योर ड्रीम्स</div>
+  <div class="splash-bar"><div class="splash-fill"></div></div>
+</div>
+
+<!-- ===== NAME INPUT ===== -->
+<div id="name-input" class="screen">
+  <div class="name-input-screen">
+    <div style="font-size:48px;margin-bottom:16px">🎓</div>
+    <div style="font-size:24px;font-weight:700;color:#fff;margin-bottom:8px" class="hi">MP Exam में स्वागत है!</div>
+    <div style="font-size:14px;color:rgba(255,255,255,0.7);margin-bottom:32px" class="hi">अपना नाम दर्ज करें</div>
+    <input class="inp-box" id="name-inp" placeholder="जैसे: राजेश कुमार" maxlength="30">
+    <button class="btn btn-primary" style="background:rgba(255,255,255,0.2);border:1.5px solid rgba(255,255,255,0.4);color:#fff" onclick="saveName()">शुरू करें →</button>
+    <div style="font-size:12px;color:rgba(255,255,255,0.5);margin-top:12px" class="hi">नाम सिर्फ इस डिवाइस पर सेव होगा</div>
+  </div>
+</div>
+
+<!-- ===== HOME ===== -->
+<div id="home" class="screen">
+  <div class="hero">
+    <div class="hero-greet">नमस्ते 👋</div>
+    <div class="hero-name" id="home-name">MP Exam</div>
+    <div class="hero-streak">🔥 <span id="streak-text">0 दिन की streak</span></div>
+  </div>
+  <div class="scroll-body">
+    <div class="stats-row">
+      <div class="stat-card"><div class="stat-val" id="s-tests">0</div><div class="stat-lbl">Tests दिए</div></div>
+      <div class="stat-card"><div class="stat-val" id="s-acc">–</div><div class="stat-lbl">Accuracy</div></div>
+      <div class="stat-card"><div class="stat-val" id="s-qs">0</div><div class="stat-lbl">Questions</div></div>
+    </div>
+    <div class="install-bar" id="install-bar">
+      <span style="font-size:22px">📲</span>
+      <div class="install-text">App को Home Screen पर install करें — offline चलेगी</div>
+      <button class="install-btn" onclick="installApp()">Install</button>
+    </div>
+    <div class="sec-title">Exam चुनें</div>
+    <div class="exam-grid">
+      <div class="exam-card" onclick="goExam('MPPSC')"><div class="exam-card-icon">📜</div><div class="exam-card-name">MPPSC</div><div class="exam-card-sub">State Services</div></div>
+      <div class="exam-card" onclick="goExam('MPSFS')"><div class="exam-card-icon">🌳</div><div class="exam-card-name">MPSFS</div><div class="exam-card-sub">Forest Service</div></div>
+      <div class="exam-card" onclick="goExam('Police Constable')"><div class="exam-card-icon">👮</div><div class="exam-card-name">Police Constable</div><div class="exam-card-sub">GK + Reasoning</div></div>
+      <div class="exam-card" onclick="goExam('ASI')"><div class="exam-card-icon">⭐</div><div class="exam-card-name">ASI</div><div class="exam-card-sub">Sub Inspector</div></div>
+      <div class="exam-card" onclick="goExam('Group 2')"><div class="exam-card-icon">🏢</div><div class="exam-card-name">Group 2</div><div class="exam-card-sub">Sub Group 1 & 3</div></div>
+      <div class="exam-card" onclick="goExam('Van Rakshak')"><div class="exam-card-icon">🌿</div><div class="exam-card-name">Van Rakshak</div><div class="exam-card-sub">Forest Dept.</div></div>
+      <div class="exam-card" onclick="goExam('Jail Prahari')"><div class="exam-card-icon">🔒</div><div class="exam-card-name">Jail Prahari</div><div class="exam-card-sub">GK + Hindi</div></div>
+      <div class="exam-card" onclick="goExam('Group 1')"><div class="exam-card-icon">🎯</div><div class="exam-card-name">Group 1</div><div class="exam-card-sub">Sub Group 2</div></div>
+    </div>
+    <div class="sec-title">आज का Current Affairs</div>
+    <div style="padding:0 16px 16px">
+      <div class="ca-card" onclick="go('ca')">
+        <div class="ca-tag" style="background:var(--primary-light);color:var(--primary)">MP Special</div>
+        <div class="ca-headline">MP Cabinet: 3 नई योजनाओं को मंजूरी — कृषि, शिक्षा, रोजगार</div>
+        <div style="font-size:12px;color:var(--fg3);margin-top:6px" class="hi">आज • 3 min पढ़ें</div>
+      </div>
+    </div>
+  </div>
+  <div class="bottom-nav">
+    <div class="nav-item active" onclick="navTo('home',this)"><div class="nav-icon">🏠</div><div class="nav-lbl">Home</div></div>
+    <div class="nav-item" onclick="navTo('exams',this)"><div class="nav-icon">📚</div><div class="nav-lbl">Exams</div></div>
+    <div class="nav-item" onclick="navTo('ca',this)"><div class="nav-icon">📰</div><div class="nav-lbl">Current</div></div>
+    <div class="nav-item" onclick="navTo('dashboard',this)"><div class="nav-icon">📊</div><div class="nav-lbl">Profile</div></div>
+  </div>
+</div>
+
+<!-- ===== EXAMS LIST ===== -->
+<div id="exams" class="screen">
+  <div class="topbar"><div class="topbar-title">Exam चुनें</div></div>
+  <div class="scroll-body">
+    <div class="list-item" onclick="goExam('MPPSC')"><div class="list-icon" style="background:#E8F0FD">📜</div><div class="list-info"><div class="list-name">MPPSC</div><div class="list-sub">Pre + Mains • Paper 1 & 2</div></div><span class="badge badge-amber">Hot</span></div>
+    <div class="list-item" onclick="goExam('MPSFS')"><div class="list-icon" style="background:#DAFBE1">🌳</div><div class="list-info"><div class="list-name">MPSFS</div><div class="list-sub">Forest Service</div></div><span class="badge badge-green">New</span></div>
+    <div class="list-item" onclick="goExam('Police Constable')"><div class="list-icon" style="background:#EDE3FF">👮</div><div class="list-info"><div class="list-name">Police Constable</div><div class="list-sub">GK + Reasoning + Maths + Science</div></div><span class="badge badge-blue">Popular</span></div>
+    <div class="list-item" onclick="goExam('ASI')"><div class="list-icon" style="background:#EDE3FF">⭐</div><div class="list-info"><div class="list-name">ASI (Sub Inspector)</div><div class="list-sub">GK + Hindi + Maths + Reasoning</div></div></div>
+    <div class="list-item" onclick="goExam('Group 1')"><div class="list-icon" style="background:#E8F0FD">🎯</div><div class="list-info"><div class="list-name">Group 1 Sub Group 2</div><div class="list-sub">Section A + B (Post-specific)</div></div></div>
+    <div class="list-item" onclick="goExam('Group 2')"><div class="list-icon" style="background:#FFF8C5">🏢</div><div class="list-info"><div class="list-name">Group 2 Sub Group 1</div><div class="list-sub">Section A + B</div></div><span class="badge badge-green">Updated</span></div>
+    <div class="list-item" onclick="goExam('Group 2B')"><div class="list-icon" style="background:#FFF8C5">🏛️</div><div class="list-info"><div class="list-name">Group 2 Sub Group 3</div><div class="list-sub">Section A + B</div></div></div>
+    <div class="list-item" onclick="goExam('Van Rakshak')"><div class="list-icon" style="background:#DAFBE1">🌿</div><div class="list-info"><div class="list-name">Van Rakshak</div><div class="list-sub">GK + Hindi + English + Maths + Science</div></div></div>
+    <div class="list-item" onclick="goExam('Jail Prahari')"><div class="list-icon" style="background:#FFEBE9">🔒</div><div class="list-info"><div class="list-name">Jail Prahari</div><div class="list-sub">GK + Hindi + English + Maths</div></div></div>
+  </div>
+  <div class="bottom-nav">
+    <div class="nav-item" onclick="navTo('home',this)"><div class="nav-icon">🏠</div><div class="nav-lbl">Home</div></div>
+    <div class="nav-item active" onclick="navTo('exams',this)"><div class="nav-icon">📚</div><div class="nav-lbl">Exams</div></div>
+    <div class="nav-item" onclick="navTo('ca',this)"><div class="nav-icon">📰</div><div class="nav-lbl">Current</div></div>
+    <div class="nav-item" onclick="navTo('dashboard',this)"><div class="nav-icon">📊</div><div class="nav-lbl">Profile</div></div>
+  </div>
+</div>
+
+<!-- ===== TEST TYPE ===== -->
+<div id="testtype" class="screen">
+  <div class="topbar"><div class="back-btn" onclick="go('exams')">←</div><div class="topbar-title" id="tt-title">MPPSC</div></div>
+  <div class="scroll-body" style="padding-top:12px">
+    <div class="tt-card" onclick="go('topics')"><div class="tt-icon" style="background:#E8F0FD">🎯</div><div class="tt-info"><div class="tt-title">Topic-wise Test</div><div class="tt-desc">किसी एक topic का focused test लें</div></div><span>›</span></div>
+    <div class="tt-card" onclick="startFullTest()"><div class="tt-icon" style="background:#DAFBE1">📄</div><div class="tt-info"><div class="tt-title">Full Length Test</div><div class="tt-desc">100 प्रश्न • Real exam pattern</div></div><span>›</span></div>
+    <div class="tt-card" onclick="startPYQ()"><div class="tt-icon" style="background:#FFF8C5">🕐</div><div class="tt-info"><div class="tt-title">Previous Year Papers</div><div class="tt-desc">2018–2024 के पुराने प्रश्नपत्र</div></div><span>›</span></div>
+    <div class="syllabus-box">
+      <div class="syllabus-title">Syllabus Topics</div>
+      <div id="syllabus-tags"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== TOPICS ===== -->
+<div id="topics" class="screen">
+  <div class="topbar"><div class="back-btn" onclick="go('testtype')">←</div><div class="topbar-title">Topic चुनें</div><div class="topbar-right" onclick="selAll()">सब चुनें</div></div>
+  <div class="scroll-body" id="topic-list"></div>
+  <div class="start-bar"><button class="btn btn-primary" id="start-btn" onclick="startTopicTest()">Test शुरू करें</button></div>
+</div>
+
+<!-- ===== QUIZ ===== -->
+<div id="quiz" class="screen">
+  <div class="quiz-meta">
+    <div class="back-btn" onclick="confirmQuit()">✕</div>
+    <div class="q-counter" id="q-num">1/10</div>
+    <div class="progress"><div class="progress-fill" id="q-prog" style="width:10%"></div></div>
+    <div class="timer" id="timer">20:00</div>
+  </div>
+  <div class="quiz-body" id="quiz-body"></div>
+  <div class="ad-strip" id="ad-strip" onclick="unlockExp()">
+    <span style="font-size:18px">📺</span>
+    <div class="ad-strip-text">Explanation unlock करें — Ad देखें</div>
+    <div class="ad-btn">देखें</div>
+  </div>
+  <div class="quiz-nav">
+    <button class="btn btn-outline" onclick="skipQ()">Skip करें</button>
+    <button class="btn btn-submit" id="sub-btn" onclick="submitQ()">जवाब दें</button>
+  </div>
+</div>
+
+<!-- ===== RESULT ===== -->
+<div id="result" class="screen">
+  <div class="scroll-body">
+    <div class="result-hero">
+      <div class="result-emoji" id="r-emoji">🏆</div>
+      <div class="result-score" id="r-score">7</div>
+      <div class="result-total" id="r-total">/10 सही</div>
+      <div class="result-msg" id="r-msg">बहुत अच्छा! 🎉</div>
+    </div>
+    <div class="result-stats">
+      <div class="rs"><div class="rs-val" id="r-c" style="color:var(--green)">7</div><div class="rs-lbl">✅ सही</div></div>
+      <div class="rs"><div class="rs-val" id="r-w" style="color:var(--red)">2</div><div class="rs-lbl">❌ गलत</div></div>
+      <div class="rs"><div class="rs-val" id="r-s" style="color:var(--amber)">1</div><div class="rs-lbl">⏭ Skip</div></div>
+    </div>
+    <div class="sec-title" style="padding-top:8px">Weak Areas (इनपर ध्यान दें)</div>
+    <div id="weak-areas"></div>
+    <div class="result-actions">
+      <button class="btn btn-outline" onclick="startAgain()">फिर से दें</button>
+      <button class="btn btn-submit" onclick="go('home')">Home जाएं</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== CURRENT AFFAIRS ===== -->
+<div id="ca" class="screen">
+  <div class="topbar"><div class="topbar-title">Current Affairs</div><div class="topbar-right">Monthly</div></div>
+  <div class="ca-filters">
+    <div class="ca-chip active" onclick="caFilter(this,'all')">सभी</div>
+    <div class="ca-chip" onclick="caFilter(this,'mp')">MP Special</div>
+    <div class="ca-chip" onclick="caFilter(this,'national')">National</div>
+    <div class="ca-chip" onclick="caFilter(this,'economy')">Economy</div>
+    <div class="ca-chip" onclick="caFilter(this,'science')">Science/IT</div>
+  </div>
+  <div class="ca-list" id="ca-list"></div>
+  <div class="bottom-nav">
+    <div class="nav-item" onclick="navTo('home',this)"><div class="nav-icon">🏠</div><div class="nav-lbl">Home</div></div>
+    <div class="nav-item" onclick="navTo('exams',this)"><div class="nav-icon">📚</div><div class="nav-lbl">Exams</div></div>
+    <div class="nav-item active" onclick="navTo('ca',this)"><div class="nav-icon">📰</div><div class="nav-lbl">Current</div></div>
+    <div class="nav-item" onclick="navTo('dashboard',this)"><div class="nav-icon">📊</div><div class="nav-lbl">Profile</div></div>
+  </div>
+</div>
+
+<!-- ===== DASHBOARD ===== -->
+<div id="dashboard" class="screen">
+  <div class="scroll-body">
+    <div class="dash-hero">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+        <div class="dash-avatar" id="dash-avatar">MP</div>
+        <div><div style="font-size:18px;font-weight:700;color:#fff;font-family:var(--deva)" id="dash-name">–</div><div style="font-size:13px;color:rgba(255,255,255,0.7);font-family:var(--deva)" id="dash-exam">MPPSC Aspirant</div></div>
+      </div>
+      <div class="dash-mini-stats">
+        <div class="dms"><div class="dms-val" id="d-tests">0</div><div class="dms-lbl">Tests</div></div>
+        <div class="dms"><div class="dms-val" id="d-qs">0</div><div class="dms-lbl">Questions</div></div>
+        <div class="dms"><div class="dms-val" id="d-streak">0🔥</div><div class="dms-lbl">Streak</div></div>
+        <div class="dms"><div class="dms-val" id="d-acc">–</div><div class="dms-lbl">Accuracy</div></div>
+      </div>
+    </div>
+    <div class="dash-section">Weak Topics (इनपर Practice करें)</div>
+    <div id="weak-topics-list"></div>
+    <div style="padding:16px 16px 8px">
+      <button class="btn btn-outline" onclick="resetData()" style="width:100%;color:var(--red);border-color:var(--red)">🗑 Data Reset करें</button>
+    </div>
+  </div>
+  <div class="bottom-nav">
+    <div class="nav-item" onclick="navTo('home',this)"><div class="nav-icon">🏠</div><div class="nav-lbl">Home</div></div>
+    <div class="nav-item" onclick="navTo('exams',this)"><div class="nav-icon">📚</div><div class="nav-lbl">Exams</div></div>
+    <div class="nav-item" onclick="navTo('ca',this)"><div class="nav-icon">📰</div><div class="nav-lbl">Current</div></div>
+    <div class="nav-item active" onclick="navTo('dashboard',this)"><div class="nav-icon">📊</div><div class="nav-lbl">Profile</div></div>
+  </div>
+</div>
+
+<!-- ===== DIALOG / TOAST ===== -->
+<div class="dlg-bg" id="dlg">
+  <div class="dlg">
+    <div class="dlg-text" id="dlg-text"></div>
+    <div class="dlg-row">
+      <button class="btn btn-outline" onclick="closeDlg()">नहीं</button>
+      <button class="btn btn-danger" id="dlg-ok">हाँ</button>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+// ===== DIALOG / TOAST =====
+let dlgCb = null;
+function askDlg(text, cb){ dlgCb = cb; document.getElementById('dlg-text').textContent = text; document.getElementById('dlg').classList.add('show'); }
+function closeDlg(){ document.getElementById('dlg').classList.remove('show'); dlgCb = null; }
+document.getElementById('dlg-ok').onclick = ()=>{ const cb = dlgCb; closeDlg(); if(cb) cb(); };
+function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(t._to); t._to=setTimeout(()=>t.classList.remove('show'),2200); }
+
+// ===== DATA =====
+const SYLLABUS = {
+  'MPPSC': ['प्राचीन इतिहास','मध्यकालीन इतिहास','आधुनिक इतिहास','MP इतिहास & संस्कृति','MP जनजातियाँ','भारत का भूगोल','MP भूगोल','जलवायु & संसाधन','भारतीय संविधान','शासन व्यवस्था','भारतीय अर्थव्यवस्था','MP अर्थव्यवस्था','बैंकिंग & योजनाएं','विज्ञान (सामान्य)','स्वास्थ्य & पर्यावरण','अंतरिक्ष & IT','पर्यावरण & जैव विविधता','अंतर्राष्ट्रीय करंट','राष्ट्रीय करंट','MP करंट','AI & Cyber Security','हिंदी बोध','तर्कशक्ति','निर्णय क्षमता','मानसिक योग्यता','गणित (10वीं)','डेटा व्याख्या'],
+  'MPSFS': ['प्राचीन इतिहास','MP इतिहास','भूगोल','पर्यावरण & वानिकी','विज्ञान','अर्थव्यवस्था','करंट अफेयर्स','कृषि विज्ञान','मृदा विज्ञान','वन्य जीव संरक्षण'],
+  'Police Constable': ['GK (इतिहास)','GK (राजनीति)','MP सामान्य ज्ञान','तर्कशक्ति','श्रेणी & संकेतन','सादृश्य','भौतिक विज्ञान','रसायन विज्ञान','जीव विज्ञान','गणित (8-10वीं)'],
+  'ASI': ['GK (इतिहास)','MP GK','राजनीति','तर्कशक्ति','गणित','हिंदी व्याकरण','करंट अफेयर्स'],
+  'Group 1': ['GK (भारत + MP)','हिंदी व्याकरण','अंग्रेजी व्याकरण','गणित','तर्कशक्ति','विज्ञान','Computer Awareness','कृषि विज्ञान','इंजीनियरिंग','वाणिज्य','मनोविज्ञान','समाजशास्त्र'],
+  'Group 2': ['GK (भारत + MP)','हिंदी व्याकरण','अंग्रेजी व्याकरण','गणित','तर्कशक्ति','विज्ञान','Computer Awareness'],
+  'Group 2B': ['GK (भारत + MP)','हिंदी व्याकरण','गणित','तर्कशक्ति','विज्ञान','Computer Awareness'],
+  'Van Rakshak': ['GK (भारत)','MP GK','हिंदी','अंग्रेजी','गणित','विज्ञान'],
+  'Jail Prahari': ['GK (भारत)','MP GK','हिंदी','अंग्रेजी','गणित']
+};
+
+const QUESTIONS = [
+  {tag:'MP इतिहास',q:'मध्य प्रदेश का राज्य पशु कौन है?',opts:['चीतल','बाघ','बारहसिंगा','तेंदुआ'],ans:2,exp:'बारहसिंगा (Swamp Deer) MP का राज्य पशु है। यह कान्हा नेशनल पार्क में पाया जाता है।'},
+  {tag:'भारतीय संविधान',q:'भारतीय संविधान की किस अनुसूची में राज्यों की सूची है?',opts:['पहली अनुसूची','दूसरी अनुसूची','तीसरी अनुसूची','चौथी अनुसूची'],ans:0,exp:'पहली अनुसूची में भारत के राज्यों और केंद्र शासित प्रदेशों की सूची है।'},
+  {tag:'MP भूगोल',q:'मध्य प्रदेश की सबसे लंबी नदी कौन सी है?',opts:['नर्मदा','ताप्ती','चंबल','बेतवा'],ans:0,exp:'नर्मदा MP की सबसे लंबी नदी है — लगभग 1312 km। इसे MP की जीवन रेखा कहते हैं।'},
+  {tag:'भारतीय अर्थव्यवस्था',q:'PM किसान सम्मान निधि के तहत प्रतिवर्ष कितनी राशि मिलती है?',opts:['₹4,000','₹6,000','₹8,000','₹10,000'],ans:1,exp:'PM-KISAN में ₹6,000 प्रतिवर्ष — तीन किश्तों में ₹2,000 प्रत्येक।'},
+  {tag:'विज्ञान (सामान्य)',q:'DNA की Double Helix संरचना की खोज किसने की?',opts:['मेंडल और डार्विन','वाटसन और क्रिक','पाश्चर और कोच','हुक और लीउवेनहॉक'],ans:1,exp:'1953 में James Watson और Francis Crick ने DNA की Double Helix संरचना खोजी।'},
+  {tag:'MP GK',q:'मध्य प्रदेश में लोकसभा सीटों की संख्या कितनी है?',opts:['24','26','28','29'],ans:2,exp:'MP में लोकसभा की 28 और राज्यसभा की 11 सीटें हैं।'},
+  {tag:'आधुनिक इतिहास',q:'1857 की क्रांति में झाँसी की रानी का नाम क्या था?',opts:['लक्ष्मीबाई','रुद्रमादेवी','रजिया सुल्तान','दुर्गावती'],ans:0,exp:'रानी लक्ष्मीबाई ने 1857 की क्रांति में अंग्रेजों से वीरतापूर्वक लड़ते हुए शहादत पाई।'},
+  {tag:'पर्यावरण & जैव विविधता',q:'भारत में बाघों की सबसे अधिक संख्या किस राज्य में है?',opts:['उत्तराखंड','मध्य प्रदेश','कर्नाटक','महाराष्ट्र'],ans:1,exp:'MP में सर्वाधिक बाघ हैं — इसे "Tiger State" कहते हैं। कान्हा, बांधवगढ़, पेंच प्रमुख रिज़र्व हैं।'},
+  {tag:'तर्कशक्ति',q:'श्रृंखला पूरी करें: 2, 6, 12, 20, 30, ?',opts:['40','42','44','45'],ans:1,exp:'पैटर्न: 1×2, 2×3, 3×4, 4×5, 5×6, 6×7 = 42। अंतर 4,6,8,10,12 बढ़ रहा है।'},
+  {tag:'गणित (10वीं)',q:'एक त्रिभुज की तीनों भुजाएं 3, 4, 5 cm हैं। उसका क्षेत्रफल क्या होगा?',opts:['5 वर्ग cm','6 वर्ग cm','7 वर्ग cm','8 वर्ग cm'],ans:1,exp:'यह समकोण त्रिभुज है। क्षेत्रफल = ½ × 3 × 4 = 6 वर्ग cm।'},
+];
+
+const CA_DATA = [
+  {cat:'mp',tag:'MP Special',tagStyle:'background:#E8F0FD;color:#1A4BAD',headline:'MP Cabinet: 3 नई योजनाओं को मंजूरी — कृषि, शिक्षा और रोजगार',body:'मध्य प्रदेश कैबिनेट ने किसानों के लिए नई ऋण माफी, सरकारी स्कूलों में डिजिटल क्लासरूम और युवा स्वरोजगार योजना को हरी झंडी दी।',src:'MP Govt. Press'},
+  {cat:'national',tag:'National',tagStyle:'background:#DAFBE1;color:#1A7F37',headline:'भारत का चंद्रयान-4: ISRO ने Launch Window की घोषणा की',body:'ISRO ने Chandrayaan-4 के लिए अगले वर्ष की launch window confirm की — Moon के south pole पर sample return mission।',src:'ISRO Official'},
+  {cat:'economy',tag:'Economy',tagStyle:'background:#FFF8C5;color:#9A6700',headline:'RBI ने Repo Rate में 25 bps की कटौती — अब 5.75%',body:'RBI MPC ने लगातार तीसरी बार repo rate घटाई, जिससे home और auto loans सस्ते होंगे।',src:'RBI Bulletin'},
+  {cat:'mp',tag:'MP Special',tagStyle:'background:#E8F0FD;color:#1A4BAD',headline:'MP में नई Industrial Policy 2024 लागू — 5 लाख रोजगार का लक्ष्य',body:'मध्य प्रदेश की नई औद्योगिक नीति में MSME को विशेष प्रोत्साहन, 5 लाख नए रोजगार और ₹2 लाख करोड़ निवेश का लक्ष्य।',src:'MP Industrial Dept.'},
+  {cat:'science',tag:'Science/IT',tagStyle:'background:#EDE3FF;color:#6F42C1',headline:'AI Regulation Bill 2024: संसद में प्रस्तुत — मुख्य प्रावधान',body:'भारत सरकार ने AI Regulation Bill संसद में पेश किया — deepfake, biometric data और AI-generated content के लिए नए नियम।',src:'PIB India'},
+  {cat:'national',tag:'National',tagStyle:'background:#DAFBE1;color:#1A7F37',headline:'भारत G20 Summit 2024: नई Delhi Declaration के मुख्य बिंदु',body:'G20 में जलवायु परिवर्तन, डिजिटल infrastructure, और Global South के विकास पर consensus।',src:'MEA India'},
+];
+
+// ===== STATE =====
+let state = {
+  cur: null, // current exam
+  selTopics: new Set(),
+  qList: [], curQ: 0, selOpt: -1, answered: false,
+  correct: 0, wrong: 0, skip: 0,
+  timerInt: null, timerSec: 1200,
+  weakTopics: {}, // {topic: {correct,total}}
+};
+
+// ===== STORAGE =====
+function loadStorage(){
+  try {
+    return JSON.parse(localStorage.getItem('mpexam')||'{}');
+  } catch(e){ return {}; }
+}
+function saveStorage(data){
+  try { localStorage.setItem('mpexam', JSON.stringify(data)); } catch(e){}
+}
+
+// ===== SCREENS =====
+function go(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function navTo(id, el){
+  go(id);
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  el.classList.add('active');
+  if(id==='dashboard') refreshDash();
+}
+
+// ===== NAME =====
+function saveName(){
+  const n = document.getElementById('name-inp').value.trim();
+  if(!n){ document.getElementById('name-inp').style.borderColor='#F85149'; return; }
+  const d = loadStorage();
+  d.name = n; d.streak = 0; d.lastDate = '';
+  d.tests = 0; d.totalQ = 0; d.correct = 0;
+  d.weakTopics = {};
+  saveStorage(d);
+  refreshHome();
+  go('home');
+}
+
+// ===== HOME =====
+function refreshHome(){
+  const d = loadStorage();
+  const name = d.name || 'MP Exam';
+  document.getElementById('home-name').textContent = name;
+  document.getElementById('s-tests').textContent = d.tests||0;
+  document.getElementById('s-qs').textContent = d.totalQ||0;
+  const acc = d.totalQ ? Math.round((d.correct/d.totalQ)*100)+'%' : '–';
+  document.getElementById('s-acc').textContent = acc;
+  // streak
+  const today = new Date().toDateString();
+  let streak = d.streak||0;
+  if(d.lastDate === today) {}
+  else if(d.lastDate === new Date(Date.now()-86400000).toDateString()) { streak++; }
+  else { streak = 1; }
+  d.streak = streak; d.lastDate = today;
+  saveStorage(d);
+  document.getElementById('streak-text').textContent = streak+' दिन की streak';
+}
+
+// ===== EXAM =====
+function goExam(name){
+  state.cur = name;
+  document.getElementById('tt-title').textContent = name;
+  const tags = document.getElementById('syllabus-tags');
+  tags.innerHTML = (SYLLABUS[name]||[]).map(t=>`<span class="syllabus-tag">${t}</span>`).join('');
+  go('testtype');
+}
+
+// ===== TOPICS =====
+function buildTopics(){
+  const topics = SYLLABUS[state.cur] || [];
+  state.selTopics.clear();
+  const container = document.getElementById('topic-list');
+  container.innerHTML = '';
+  // Group by first word pattern
+  let groups = {};
+  topics.forEach(t=>{
+    let g = 'सामान्य ज्ञान';
+    if(t.includes('इतिहास')||t.includes('History')) g='इतिहास';
+    else if(t.includes('भूगोल')||t.includes('Geography')) g='भूगोल';
+    else if(t.includes('अर्थ')||t.includes('बैंकिंग')||t.includes('योजना')) g='अर्थव्यवस्था';
+    else if(t.includes('राजनीति')||t.includes('संविधान')||t.includes('शासन')) g='राजनीति';
+    else if(t.includes('विज्ञान')||t.includes('पर्यावरण')||t.includes('जैव')) g='विज्ञान';
+    else if(t.includes('गणित')||t.includes('तर्क')||t.includes('डेटा')||t.includes('मानसिक')) g='गणित & तर्कशक्ति';
+    else if(t.includes('हिंदी')||t.includes('अंग्रेजी')||t.includes('बोध')) g='भाषा';
+    else if(t.includes('करंट')||t.includes('Current')) g='करंट अफेयर्स';
+    if(!groups[g]) groups[g]=[];
+    groups[g].push(t);
+  });
+  Object.entries(groups).forEach(([g,ts])=>{
+    const gl = document.createElement('div');
+    gl.innerHTML = `<div class="group-label">${g}</div>`;
+    ts.forEach(t=>{
+      const qi = Math.floor(Math.random()*20)+25;
+      const d = document.createElement('div');
+      d.className = 'topic-item';
+      d.dataset.topic = t;
+      d.innerHTML = `<div class="topic-check" id="tc-${t.replace(/\s/g,'_')}"></div><div class="topic-name">${t}</div><div class="topic-q">${qi} प्रश्न</div>`;
+      d.onclick = ()=>toggleTopic(t,d);
+      gl.appendChild(d);
+    });
+    container.appendChild(gl);
+  });
+  updateStartBtn();
+}
+
+function toggleTopic(t, row){
+  const ch = row.querySelector('.topic-check');
+  if(state.selTopics.has(t)){ state.selTopics.delete(t); ch.classList.remove('sel'); ch.textContent=''; }
+  else { state.selTopics.add(t); ch.classList.add('sel'); ch.textContent='✓'; }
+  updateStartBtn();
+}
+
+function selAll(){
+  document.querySelectorAll('.topic-item').forEach(row=>{
+    const t = row.dataset.topic;
+    state.selTopics.add(t);
+    const ch = row.querySelector('.topic-check');
+    ch.classList.add('sel'); ch.textContent='✓';
+  });
+  updateStartBtn();
+}
+
+function updateStartBtn(){
+  const n = state.selTopics.size;
+  document.getElementById('start-btn').textContent = n ? `Test शुरू करें (${n} topics)` : 'Topic चुनें';
+}
+
+function startTopicTest(){
+  if(!state.selTopics.size){ toast('कम से कम एक topic चुनें'); return; }
+  launchQuiz(10);
+}
+
+function startFullTest(){ state.selTopics = new Set(SYLLABUS[state.cur]||[]); launchQuiz(10); }
+function startPYQ(){ state.selTopics = new Set(SYLLABUS[state.cur]||[]); launchQuiz(10); }
+function startAgain(){ launchQuiz(state.qList.length); }
+
+// ===== QUIZ ENGINE =====
+function launchQuiz(count){
+  // Pick questions — try to match selected topics
+  let pool = QUESTIONS.filter(q=> state.selTopics.has(q.tag));
+  if(pool.length < 3) pool = QUESTIONS;
+  // shuffle
+  pool = pool.slice().sort(()=>Math.random()-0.5);
+  state.qList = pool.slice(0, Math.min(count, pool.length));
+  if(!state.qList.length){ toast('इस exam के लिए प्रश्न जोड़े जा रहे हैं!'); return; }
+  state.curQ = 0; state.selOpt = -1; state.answered = false;
+  state.correct = 0; state.wrong = 0; state.skip = 0;
+  state.weakTopics = {};
+  clearInterval(state.timerInt);
+  state.timerSec = 60 * state.qList.length * 2;
+  go('quiz');
+  renderQ();
+  startTimer();
+}
+
+function renderQ(){
+  const q = state.qList[state.curQ];
+  const total = state.qList.length;
+  document.getElementById('q-num').textContent = `${state.curQ+1}/${total}`;
+  document.getElementById('q-prog').style.width = `${((state.curQ+1)/total)*100}%`;
+  document.getElementById('sub-btn').textContent = 'जवाब दें';
+  state.selOpt = -1; state.answered = false;
+  document.getElementById('ad-strip').classList.remove('show');
+  document.getElementById('quiz-body').innerHTML = `
+    <div class="q-tag">${q.tag}</div>
+    <div class="q-text">${q.q}</div>
+    ${q.opts.map((o,i)=>`
+      <div class="option" id="opt${i}" onclick="pickOpt(${i})">
+        <div class="opt-letter">${['A','B','C','D'][i]}</div>
+        <div class="opt-text">${o}</div>
+      </div>`).join('')}
+    <div class="exp-box" id="exp-box">
+      <div class="exp-title">📖 Explanation</div>
+      <div class="exp-text">${q.exp}</div>
+    </div>`;
+}
+
+function pickOpt(i){
+  if(state.answered) return;
+  state.selOpt = i;
+  document.querySelectorAll('.option').forEach((o,idx)=>{
+    o.classList.toggle('sel', idx===i);
+  });
+  document.getElementById('sub-btn').textContent = 'Submit करें';
+}
+
+function submitQ(){
+  const q = state.qList[state.curQ];
+  if(!state.answered && state.selOpt===-1){ skipQ(); return; }
+  if(!state.answered){
+    state.answered = true;
+    document.querySelectorAll('.option').forEach((o,i)=>{
+      if(i===q.ans) o.classList.add('correct');
+      else if(i===state.selOpt) o.classList.add('wrong');
+    });
+    if(!state.weakTopics[q.tag]) state.weakTopics[q.tag]={correct:0,total:0};
+    state.weakTopics[q.tag].total++;
+    if(state.selOpt===q.ans){ state.correct++; state.weakTopics[q.tag].correct++; }
+    else { state.wrong++; }
+    document.getElementById('sub-btn').textContent = 'अगला सवाल →';
+    document.getElementById('ad-strip').classList.add('show');
+  } else {
+    document.getElementById('ad-strip').classList.remove('show');
+    nextQ();
+  }
+}
+
+function unlockExp(){
+  document.getElementById('exp-box').classList.add('show');
+  document.getElementById('ad-strip').classList.remove('show');
+}
+
+function skipQ(){
+  if(!state.answered){ state.skip++; nextQ(); }
+}
+
+function nextQ(){
+  if(state.curQ < state.qList.length-1){ state.curQ++; renderQ(); }
+  else { finishQuiz(); }
+}
+
+function confirmQuit(){
+  askDlg('Test छोड़ना चाहते हैं? Progress save नहीं होगा।', ()=>{ clearInterval(state.timerInt); go('home'); });
+}
+
+// ===== TIMER =====
+function startTimer(){
+  updateTimerDisplay();
+  state.timerInt = setInterval(()=>{
+    state.timerSec--;
+    updateTimerDisplay();
+    if(state.timerSec<=0){ clearInterval(state.timerInt); finishQuiz(); }
+  },1000);
+}
+
+function updateTimerDisplay(){
+  const m = Math.floor(state.timerSec/60), s = state.timerSec%60;
+  const el = document.getElementById('timer');
+  if(el) el.textContent = `${m}:${s<10?'0'+s:s}`;
+  if(el && state.timerSec<=60) el.style.color='var(--red)';
+}
+
+// ===== RESULT =====
+function finishQuiz(){
+  clearInterval(state.timerInt);
+  const total = state.qList.length;
+  const pct = Math.round((state.correct/total)*100);
+  document.getElementById('r-score').textContent = state.correct;
+  document.getElementById('r-total').textContent = `/${total} सही`;
+  document.getElementById('r-c').textContent = state.correct;
+  document.getElementById('r-w').textContent = state.wrong;
+  document.getElementById('r-s').textContent = state.skip;
+  document.getElementById('r-emoji').textContent = pct>=80?'🏆':pct>=60?'👏':'📚';
+  document.getElementById('r-msg').textContent = pct>=80?'शानदार प्रदर्शन! 🎉':pct>=60?'अच्छा! और Practice करें 💪':'मेहनत जारी रखें 📚';
+
+  // Weak areas
+  const weak = document.getElementById('weak-areas');
+  const entries = Object.entries(state.weakTopics)
+    .map(([t,v])=>({t, pct:Math.round((v.correct/v.total)*100)}))
+    .sort((a,b)=>a.pct-b.pct);
+  weak.innerHTML = entries.slice(0,5).map(e=>{
+    const color = e.pct<50?'var(--red)':e.pct<70?'var(--amber)':'var(--green)';
+    return `<div class="weak-item"><div class="weak-name">${e.t}</div><div class="weak-bar"><div class="weak-fill" style="width:${e.pct}%;background:${color}"></div></div><div class="weak-pct">${e.pct}%</div></div>`;
+  }).join('');
+
+  // Save to storage
+  const d = loadStorage();
+  d.tests = (d.tests||0)+1;
+  d.totalQ = (d.totalQ||0)+total;
+  d.correct = (d.correct||0)+state.correct;
+  if(!d.weakTopics) d.weakTopics={};
+  Object.entries(state.weakTopics).forEach(([t,v])=>{
+    if(!d.weakTopics[t]) d.weakTopics[t]={correct:0,total:0};
+    d.weakTopics[t].correct+=v.correct;
+    d.weakTopics[t].total+=v.total;
+  });
+  saveStorage(d);
+  refreshHome();
+  go('result');
+}
+
+// ===== CURRENT AFFAIRS =====
+let caActive = 'all';
+function renderCA(){
+  const list = document.getElementById('ca-list');
+  const items = caActive==='all' ? CA_DATA : CA_DATA.filter(c=>c.cat===caActive);
+  list.innerHTML = items.map(c=>`
+    <div class="ca-card">
+      <div class="ca-tag" style="${c.tagStyle}">${c.tag}</div>
+      <div class="ca-headline">${c.headline}</div>
+      <div class="ca-body">${c.body}</div>
+      <div class="ca-footer">
+        <span class="ca-src">📌 ${c.src}</span>
+        <span class="ca-quiz" onclick="go('home')">Quiz लें →</span>
+      </div>
+    </div>`).join('');
+}
+function caFilter(el, cat){
+  caActive=cat;
+  document.querySelectorAll('.ca-chip').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');
+  renderCA();
+}
+
+// ===== DASHBOARD =====
+function refreshDash(){
+  const d = loadStorage();
+  const name = d.name||'–';
+  document.getElementById('dash-name').textContent = name;
+  document.getElementById('dash-avatar').textContent = name.charAt(0).toUpperCase();
+  document.getElementById('d-tests').textContent = d.tests||0;
+  document.getElementById('d-qs').textContent = d.totalQ||0;
+  document.getElementById('d-streak').textContent = (d.streak||0)+'🔥';
+  const acc = d.totalQ ? Math.round((d.correct/d.totalQ)*100)+'%' : '–';
+  document.getElementById('d-acc').textContent = acc;
+  document.getElementById('dash-exam').textContent = (state.cur||'MP') + ' Aspirant';
+  // Weak topics
+  const wt = d.weakTopics||{};
+  const sorted = Object.entries(wt)
+    .map(([t,v])=>({t, pct:Math.round((v.correct/v.total)*100)}))
+    .sort((a,b)=>a.pct-b.pct);
+  const list = document.getElementById('weak-topics-list');
+  if(!sorted.length){
+    list.innerHTML = '<div style="padding:20px 16px;color:var(--fg3);text-align:center;font-family:var(--deva)">अभी कोई test नहीं दिया। Test दें और अपनी weakness देखें।</div>';
+    return;
+  }
+  list.innerHTML = sorted.slice(0,8).map(e=>{
+    const color = e.pct<50?'var(--red-bg)':e.pct<70?'var(--amber-bg)':'var(--green-bg)';
+    const icon = e.pct<50?'❌':e.pct<70?'⚠️':'✅';
+    return `<div class="wt-item"><div class="wt-icon" style="background:${color}">${icon}</div><div class="wt-name">${e.t}</div><div class="wt-score">${e.pct}%</div></div>`;
+  }).join('');
+}
+
+function resetData(){
+  askDlg('सारा data delete होगा — क्या sure हैं?', ()=>{
+    try{ localStorage.removeItem('mpexam'); }catch(e){}
+    location.reload();
+  });
+}
+
+// ===== INIT =====
+renderCA();
+setTimeout(()=>{
+  const d = loadStorage();
+  if(d.name){ refreshHome(); go('home'); }
+  else { go('name-input'); }
+}, 2400);
+
+// Override go() to rebuild topics when navigating there
+const _go = go;
+window.go = function(id){
+  _go(id);
+  if(id==='topics') buildTopics();
+};
+
+// ===== PWA: Install prompt + Service Worker =====
+let deferredPrompt = null;
+window.addEventListener('beforeinstallprompt', e=>{
+  e.preventDefault(); deferredPrompt = e;
+  document.getElementById('install-bar').classList.add('show');
+});
+function installApp(){
+  if(deferredPrompt){ deferredPrompt.prompt(); deferredPrompt.userChoice.then(()=>{ deferredPrompt=null; document.getElementById('install-bar').classList.remove('show'); }); }
+  else { toast('Safari में: Share ⬆️ → "Add to Home Screen"'); }
+}
+window.addEventListener('appinstalled', ()=>{ document.getElementById('install-bar').classList.remove('show'); toast('App install हो गई! 🎉'); });
+(function(){
+  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  const standalone = window.navigator.standalone === true || matchMedia('(display-mode: standalone)').matches;
+  if(isIOS && !standalone){ document.getElementById('install-bar').classList.add('show'); }
+})();
+if('serviceWorker' in navigator && location.protocol.startsWith('http')){
+  window.addEventListener('load', ()=>{ navigator.serviceWorker.register('sw.js').catch(()=>{}); });
+}
+</script>
+</body>
+</html>
