@@ -10,16 +10,22 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
-      - uses: actions/setup-java@v4
+          node-version: 22
+
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
-          java-version: 17
-      - uses: android-actions/setup-android@v3
-      - run: npm install
-      - run: npx cap add android
+          java-version: 21
+
+      - name: Install Capacitor
+        run: npm install
+
+      - name: Add Android platform
+        run: npx cap add android
+
       - name: Set app icons
         run: |
           RES=android/app/src/main/res
@@ -27,10 +33,14 @@ jobs:
           cp www/icons/icon-96.png  $RES/mipmap-xhdpi/ic_launcher.png;   cp www/icons/icon-96.png  $RES/mipmap-xhdpi/ic_launcher_round.png;   cp www/icons/icon-96.png  $RES/mipmap-xhdpi/ic_launcher_foreground.png
           cp www/icons/icon-144.png $RES/mipmap-xxhdpi/ic_launcher.png;  cp www/icons/icon-144.png $RES/mipmap-xxhdpi/ic_launcher_round.png;  cp www/icons/icon-144.png $RES/mipmap-xxhdpi/ic_launcher_foreground.png
           cp www/icons/icon-192.png $RES/mipmap-xxxhdpi/ic_launcher.png; cp www/icons/icon-192.png $RES/mipmap-xxxhdpi/ic_launcher_round.png; cp www/icons/icon-192.png $RES/mipmap-xxxhdpi/ic_launcher_foreground.png
-      - run: npx cap sync android
+
+      - name: Sync web assets
+        run: npx cap sync android
+
       - name: Build APK
         working-directory: android
         run: chmod +x gradlew && ./gradlew assembleDebug --no-daemon
+
       - uses: actions/upload-artifact@v4
         with:
           name: mp-exam-debug-apk
