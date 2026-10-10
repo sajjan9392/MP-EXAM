@@ -6,12 +6,12 @@
 <meta name="theme-color" content="#0D2B7E">
 <meta name="description" content="MP के 9 competitive exams की तैयारी — Quiz, Syllabus, Current Affairs, Dashboard। Offline।">
 <link rel="manifest" href="manifest.json">
-<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="MP Exam">
-<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="apple-touch-icon" href="icon-180.png">
 <title>MP Exam</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap">
 <style>
@@ -172,10 +172,6 @@ html,body{height:100%;font-family:var(--sans);background:var(--bg);color:var(--f
 .exp-box.show{display:block}
 .exp-title{font-size:12px;font-weight:600;color:var(--green);margin-bottom:4px;font-family:var(--deva)}
 .exp-text{font-size:13px;color:var(--fg);line-height:1.6;font-family:var(--deva)}
-.ad-strip{margin:0 16px 10px;padding:10px 14px;background:var(--amber-bg);border:1px solid var(--amber);border-radius:8px;display:none;align-items:center;gap:10px;cursor:pointer}
-.ad-strip.show{display:flex}
-.ad-strip-text{flex:1;font-size:13px;color:var(--amber);font-weight:500;font-family:var(--deva)}
-.ad-btn{font-size:12px;background:var(--amber);color:#fff;border-radius:20px;padding:4px 12px;font-weight:600;font-family:var(--deva)}
 .quiz-nav{display:flex;gap:10px;padding:12px 16px;background:var(--bg2);border-top:1px solid var(--border)}
 
 /* BUTTONS */
@@ -297,7 +293,7 @@ body{padding-top:env(safe-area-inset-top,0px)}
       <div class="install-text">App को Home Screen पर install करें — offline चलेगी</div>
       <button class="install-btn" onclick="installApp()">Install</button>
     </div>
-    <div class="sec-title">Exam चुनें</div>
+    <div class="sec-title" style="display:flex;justify-content:space-between"><span>Exam चुनें</span><span id="qcount" style="font-weight:500;text-transform:none;letter-spacing:0"></span></div>
     <div class="exam-grid">
       <div class="exam-card" onclick="goExam('MPPSC')"><div class="exam-card-icon">📜</div><div class="exam-card-name">MPPSC</div><div class="exam-card-sub">State Services</div></div>
       <div class="exam-card" onclick="goExam('MPSFS')"><div class="exam-card-icon">🌳</div><div class="exam-card-name">MPSFS</div><div class="exam-card-sub">Forest Service</div></div>
@@ -310,11 +306,7 @@ body{padding-top:env(safe-area-inset-top,0px)}
     </div>
     <div class="sec-title">आज का Current Affairs</div>
     <div style="padding:0 16px 16px">
-      <div class="ca-card" onclick="go('ca')">
-        <div class="ca-tag" style="background:var(--primary-light);color:var(--primary)">MP Special</div>
-        <div class="ca-headline">MP Cabinet: 3 नई योजनाओं को मंजूरी — कृषि, शिक्षा, रोजगार</div>
-        <div style="font-size:12px;color:var(--fg3);margin-top:6px" class="hi">आज • 3 min पढ़ें</div>
-      </div>
+      <div class="ca-card" id="home-ca" onclick="go('ca')"></div>
     </div>
   </div>
   <div class="bottom-nav">
@@ -377,11 +369,6 @@ body{padding-top:env(safe-area-inset-top,0px)}
     <div class="timer" id="timer">20:00</div>
   </div>
   <div class="quiz-body" id="quiz-body"></div>
-  <div class="ad-strip" id="ad-strip" onclick="unlockExp()">
-    <span style="font-size:18px">📺</span>
-    <div class="ad-strip-text">Explanation unlock करें — Ad देखें</div>
-    <div class="ad-btn">देखें</div>
-  </div>
   <div class="quiz-nav">
     <button class="btn btn-outline" onclick="skipQ()">Skip करें</button>
     <button class="btn btn-submit" id="sub-btn" onclick="submitQ()">जवाब दें</button>
@@ -404,11 +391,18 @@ body{padding-top:env(safe-area-inset-top,0px)}
     </div>
     <div class="sec-title" style="padding-top:8px">Weak Areas (इनपर ध्यान दें)</div>
     <div id="weak-areas"></div>
+    <div style="padding:0 16px"><button class="btn btn-outline" style="width:100%" onclick="showReview()">📖 सभी उत्तर & व्याख्या देखें</button></div>
     <div class="result-actions">
       <button class="btn btn-outline" onclick="startAgain()">फिर से दें</button>
       <button class="btn btn-submit" onclick="go('home')">Home जाएं</button>
     </div>
   </div>
+</div>
+
+<!-- ===== REVIEW ===== -->
+<div id="review" class="screen">
+  <div class="topbar"><div class="back-btn" onclick="go('result')">←</div><div class="topbar-title">उत्तर समीक्षा</div></div>
+  <div class="scroll-body" id="review-body" style="padding:12px 16px"></div>
 </div>
 
 <!-- ===== CURRENT AFFAIRS ===== -->
@@ -445,8 +439,13 @@ body{padding-top:env(safe-area-inset-top,0px)}
         <div class="dms"><div class="dms-val" id="d-acc">–</div><div class="dms-lbl">Accuracy</div></div>
       </div>
     </div>
+    <div class="dash-section">पिछले Tests</div>
+    <div id="history-list"></div>
     <div class="dash-section">Weak Topics (इनपर Practice करें)</div>
     <div id="weak-topics-list"></div>
+    <div class="dash-section">App के बारे में</div>
+    <div class="wt-item"><div class="wt-icon" style="background:var(--primary-light)">ℹ️</div><div class="wt-name">MP Exam v1.1 — MP के सरकारी exams की तैयारी<div style="font-size:11px;color:var(--fg3)">Offline • कोई login नहीं • Data सिर्फ आपके phone पर</div></div></div>
+    <a class="wt-item" href="privacy.html" style="text-decoration:none"><div class="wt-icon" style="background:var(--primary-light)">🔒</div><div class="wt-name">Privacy Policy</div><div class="wt-score" style="color:var(--fg3)">›</div></a>
     <div style="padding:16px 16px 8px">
       <button class="btn btn-outline" onclick="resetData()" style="width:100%;color:var(--red);border-color:var(--red)">🗑 Data Reset करें</button>
     </div>
@@ -492,7 +491,7 @@ const SYLLABUS = {
   'Jail Prahari': ['GK (भारत)','MP GK','हिंदी','अंग्रेजी','गणित']
 };
 
-const QUESTIONS = [
+let QUESTIONS = [
   {tag:'MP इतिहास',q:'मध्य प्रदेश का राज्य पशु कौन है?',opts:['चीतल','बाघ','बारहसिंगा','तेंदुआ'],ans:2,exp:'बारहसिंगा (Swamp Deer) MP का राज्य पशु है। यह कान्हा नेशनल पार्क में पाया जाता है।'},
   {tag:'भारतीय संविधान',q:'भारतीय संविधान की किस अनुसूची में राज्यों की सूची है?',opts:['पहली अनुसूची','दूसरी अनुसूची','तीसरी अनुसूची','चौथी अनुसूची'],ans:0,exp:'पहली अनुसूची में भारत के राज्यों और केंद्र शासित प्रदेशों की सूची है।'},
   {tag:'MP भूगोल',q:'मध्य प्रदेश की सबसे लंबी नदी कौन सी है?',opts:['नर्मदा','ताप्ती','चंबल','बेतवा'],ans:0,exp:'नर्मदा MP की सबसे लंबी नदी है — लगभग 1312 km। इसे MP की जीवन रेखा कहते हैं।'},
@@ -505,7 +504,7 @@ const QUESTIONS = [
   {tag:'गणित (10वीं)',q:'एक त्रिभुज की तीनों भुजाएं 3, 4, 5 cm हैं। उसका क्षेत्रफल क्या होगा?',opts:['5 वर्ग cm','6 वर्ग cm','7 वर्ग cm','8 वर्ग cm'],ans:1,exp:'यह समकोण त्रिभुज है। क्षेत्रफल = ½ × 3 × 4 = 6 वर्ग cm।'},
 ];
 
-const CA_DATA = [
+let CA_DATA = [
   {cat:'mp',tag:'MP Special',tagStyle:'background:#E8F0FD;color:#1A4BAD',headline:'MP Cabinet: 3 नई योजनाओं को मंजूरी — कृषि, शिक्षा और रोजगार',body:'मध्य प्रदेश कैबिनेट ने किसानों के लिए नई ऋण माफी, सरकारी स्कूलों में डिजिटल क्लासरूम और युवा स्वरोजगार योजना को हरी झंडी दी।',src:'MP Govt. Press'},
   {cat:'national',tag:'National',tagStyle:'background:#DAFBE1;color:#1A7F37',headline:'भारत का चंद्रयान-4: ISRO ने Launch Window की घोषणा की',body:'ISRO ने Chandrayaan-4 के लिए अगले वर्ष की launch window confirm की — Moon के south pole पर sample return mission।',src:'ISRO Official'},
   {cat:'economy',tag:'Economy',tagStyle:'background:#FFF8C5;color:#9A6700',headline:'RBI ने Repo Rate में 25 bps की कटौती — अब 5.75%',body:'RBI MPC ने लगातार तीसरी बार repo rate घटाई, जिससे home और auto loans सस्ते होंगे।',src:'RBI Bulletin'},
@@ -513,6 +512,47 @@ const CA_DATA = [
   {cat:'science',tag:'Science/IT',tagStyle:'background:#EDE3FF;color:#6F42C1',headline:'AI Regulation Bill 2024: संसद में प्रस्तुत — मुख्य प्रावधान',body:'भारत सरकार ने AI Regulation Bill संसद में पेश किया — deepfake, biometric data और AI-generated content के लिए नए नियम।',src:'PIB India'},
   {cat:'national',tag:'National',tagStyle:'background:#DAFBE1;color:#1A7F37',headline:'भारत G20 Summit 2024: नई Delhi Declaration के मुख्य बिंदु',body:'G20 में जलवायु परिवर्तन, डिजिटल infrastructure, और Global South के विकास पर consensus।',src:'MEA India'},
 ];
+
+// Subject buckets (same keywords as convert_xlsx.py)
+const BUCKETS = [
+  ['mp',    ['mp ','म.प्र','मध्य प्रदेश','madhya','जनजाति','tribe']],
+  ['hist',  ['इतिहास','history','संस्कृति','culture']],
+  ['geo',   ['भूगोल','geograph','जलवायु','नदी','climate','resource','संसाधन']],
+  ['polity',['संविधान','राजनीति','राजव्यवस्था','polity','constitution','शासन','governance']],
+  ['eco',   ['अर्थ','econom','बैंक','bank','योजना','scheme','budget','बजट']],
+  ['env',   ['पर्यावरण','environment','जैव','biodiversity','ecology','पारिस्थितिक']],
+  ['sci',   ['विज्ञान','science','physics','chemistry','biology','भौतिक','रसायन','जीव','अंतरिक्ष','space','स्वास्थ्य','health']],
+  ['comp',  ['computer','कंप्यूटर','it ','ai','cyber','साइबर','digital']],
+  ['reason',['तर्क','reason','मानसिक','mental','aptitude','निर्णय','decision']],
+  ['math',  ['गणित','math','quant','data','डेटा','संख्या']],
+  ['hindi', ['हिंदी','hindi','व्याकरण','grammar']],
+  ['eng',   ['english','अंग्रेजी']],
+  ['agri',  ['कृषि','agri','soil','मृदा','horticult']],
+  ['ca',    ['करंट','current','समसामयिक']],
+];
+const BUCKET_NAME = {mp:'मध्य प्रदेश',hist:'इतिहास',geo:'भूगोल',polity:'राजव्यवस्था',eco:'अर्थव्यवस्था',env:'पर्यावरण',sci:'विज्ञान',comp:'कंप्यूटर / IT',reason:'तर्कशक्ति',math:'गणित',hindi:'हिंदी',eng:'अंग्रेजी',agri:'कृषि',ca:'करंट अफेयर्स',gk:'सामान्य ज्ञान'};
+function bucketOf(t){
+  const s=(' '+t+' ').toLowerCase();
+  for(const [k,kws] of BUCKETS){ if(kws.some(w=>s.includes(w))) return k; }
+  return 'gk';
+}
+// GK topics ("GK (भारत + MP)") should pull from several buckets
+function bucketsForTopic(t){
+  const b=bucketOf(t);
+  if(b==='gk' || /^gk/i.test(t.trim())) return ['mp','hist','geo','polity','eco','env','sci','gk'];
+  if(b==='ca') return ['ca','mp','eco','sci','env'];
+  return [b];
+}
+function examBuckets(exam){
+  const s=new Set(); (SYLLABUS[exam]||[]).forEach(t=>bucketsForTopic(t).forEach(b=>s.add(b))); return s;
+}
+function updateQCount(){ const el=document.getElementById('qcount'); if(el) el.textContent = QUESTIONS.length+' प्रश्न'; }
+async function loadData(){
+  try{ const r=await fetch('questions.json',{cache:'no-cache'}); if(r.ok){ const j=await r.json(); if(Array.isArray(j)&&j.length) QUESTIONS=j; } }catch(e){}
+  try{ const r=await fetch('ca.json',{cache:'no-cache'}); if(r.ok){ const j=await r.json(); if(Array.isArray(j)&&j.length){ CA_DATA=j; renderCA(); renderHomeCA(); } } }catch(e){}
+  updateQCount();
+}
+loadData();
 
 // ===== STATE =====
 let state = {
@@ -583,6 +623,7 @@ function refreshHome(){
 // ===== EXAM =====
 function goExam(name){
   state.cur = name;
+  try{ const d=loadStorage(); d.exam=name; saveStorage(d); }catch(e){}
   document.getElementById('tt-title').textContent = name;
   const tags = document.getElementById('syllabus-tags');
   tags.innerHTML = (SYLLABUS[name]||[]).map(t=>`<span class="syllabus-tag">${t}</span>`).join('');
@@ -590,23 +631,27 @@ function goExam(name){
 }
 
 // ===== TOPICS =====
+function countFor(topic){
+  const bs=new Set(bucketsForTopic(topic));
+  // exact tag match counts first, else bucket
+  const exact=QUESTIONS.filter(q=>q.tag===topic).length;
+  if(exact>=5) return exact;
+  return QUESTIONS.filter(q=>bs.has(q.sub)).length;
+}
+function poolFor(topics){
+  const tset=new Set(topics); const bs=new Set(); topics.forEach(t=>bucketsForTopic(t).forEach(b=>bs.add(b)));
+  let exact=QUESTIONS.filter(q=>tset.has(q.tag));
+  let byB=QUESTIONS.filter(q=>bs.has(q.sub) && !tset.has(q.tag));
+  return exact.concat(byB);
+}
 function buildTopics(){
   const topics = SYLLABUS[state.cur] || [];
   state.selTopics.clear();
   const container = document.getElementById('topic-list');
   container.innerHTML = '';
-  // Group by first word pattern
   let groups = {};
   topics.forEach(t=>{
-    let g = 'सामान्य ज्ञान';
-    if(t.includes('इतिहास')||t.includes('History')) g='इतिहास';
-    else if(t.includes('भूगोल')||t.includes('Geography')) g='भूगोल';
-    else if(t.includes('अर्थ')||t.includes('बैंकिंग')||t.includes('योजना')) g='अर्थव्यवस्था';
-    else if(t.includes('राजनीति')||t.includes('संविधान')||t.includes('शासन')) g='राजनीति';
-    else if(t.includes('विज्ञान')||t.includes('पर्यावरण')||t.includes('जैव')) g='विज्ञान';
-    else if(t.includes('गणित')||t.includes('तर्क')||t.includes('डेटा')||t.includes('मानसिक')) g='गणित & तर्कशक्ति';
-    else if(t.includes('हिंदी')||t.includes('अंग्रेजी')||t.includes('बोध')) g='भाषा';
-    else if(t.includes('करंट')||t.includes('Current')) g='करंट अफेयर्स';
+    const g = BUCKET_NAME[bucketOf(t)] || 'सामान्य ज्ञान';
     if(!groups[g]) groups[g]=[];
     groups[g].push(t);
   });
@@ -614,7 +659,7 @@ function buildTopics(){
     const gl = document.createElement('div');
     gl.innerHTML = `<div class="group-label">${g}</div>`;
     ts.forEach(t=>{
-      const qi = Math.floor(Math.random()*20)+25;
+      const qi = countFor(t);
       const d = document.createElement('div');
       d.className = 'topic-item';
       d.dataset.topic = t;
@@ -651,27 +696,30 @@ function updateStartBtn(){
 
 function startTopicTest(){
   if(!state.selTopics.size){ toast('कम से कम एक topic चुनें'); return; }
-  launchQuiz(10);
+  state.mode='topic'; launchQuiz(20);
 }
-
-function startFullTest(){ state.selTopics = new Set(SYLLABUS[state.cur]||[]); launchQuiz(10); }
-function startPYQ(){ state.selTopics = new Set(SYLLABUS[state.cur]||[]); launchQuiz(10); }
+function startFullTest(){ state.selTopics = new Set(SYLLABUS[state.cur]||[]); state.mode='full'; launchQuiz(50); }
+function startPYQ(){
+  state.selTopics = new Set(SYLLABUS[state.cur]||[]); state.mode='pyq';
+  if(!QUESTIONS.some(q=>q.year)) toast('PYQ जल्द जोड़े जाएँगे — अभी mixed test');
+  launchQuiz(30);
+}
 function startAgain(){ launchQuiz(state.qList.length); }
 
 // ===== QUIZ ENGINE =====
+function shuffle(a){ a=a.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
 function launchQuiz(count){
-  // Pick questions — try to match selected topics
-  let pool = QUESTIONS.filter(q=> state.selTopics.has(q.tag));
-  if(pool.length < 3) pool = QUESTIONS;
-  // shuffle
-  pool = pool.slice().sort(()=>Math.random()-0.5);
+  let pool = poolFor([...state.selTopics]);
+  if(state.mode==='pyq'){ const py=pool.filter(q=>q.year); if(py.length>=10) pool=py; }
+  if(pool.length < 5) pool = QUESTIONS;
+  pool = shuffle(pool);
   state.qList = pool.slice(0, Math.min(count, pool.length));
   if(!state.qList.length){ toast('इस exam के लिए प्रश्न जोड़े जा रहे हैं!'); return; }
   state.curQ = 0; state.selOpt = -1; state.answered = false;
   state.correct = 0; state.wrong = 0; state.skip = 0;
-  state.weakTopics = {};
+  state.weakTopics = {}; state.answers = [];
   clearInterval(state.timerInt);
-  state.timerSec = 60 * state.qList.length * 2;
+  state.timerSec = 60 * state.qList.length;
   go('quiz');
   renderQ();
   startTimer();
@@ -684,18 +732,17 @@ function renderQ(){
   document.getElementById('q-prog').style.width = `${((state.curQ+1)/total)*100}%`;
   document.getElementById('sub-btn').textContent = 'जवाब दें';
   state.selOpt = -1; state.answered = false;
-  document.getElementById('ad-strip').classList.remove('show');
   document.getElementById('quiz-body').innerHTML = `
     <div class="q-tag">${q.tag}</div>
-    <div class="q-text">${q.q}</div>
+    <div class="q-text">${q.q}${q.year?` <span class="badge badge-amber" style="font-size:10px;vertical-align:middle">PYQ ${q.year}</span>`:''}${q.qe&&q.qe!==q.q?`<div style="font-size:13px;color:var(--fg2);margin-top:6px;font-family:var(--sans)">${q.qe}</div>`:''}</div>
     ${q.opts.map((o,i)=>`
       <div class="option" id="opt${i}" onclick="pickOpt(${i})">
         <div class="opt-letter">${['A','B','C','D'][i]}</div>
-        <div class="opt-text">${o}</div>
+        <div class="opt-text">${o}${q.optse&&q.optse[i]&&q.optse[i]!==o?`<span style="color:var(--fg3);font-size:12px;font-family:var(--sans)"> · ${q.optse[i]}</span>`:''}</div>
       </div>`).join('')}
     <div class="exp-box" id="exp-box">
-      <div class="exp-title">📖 Explanation</div>
-      <div class="exp-text">${q.exp}</div>
+      <div class="exp-title">📖 व्याख्या</div>
+      <div class="exp-text">${q.exp || 'सही उत्तर: '+['A','B','C','D'][q.ans]+') '+q.opts[q.ans]}</div>
     </div>`;
 }
 
@@ -717,22 +764,19 @@ function submitQ(){
       if(i===q.ans) o.classList.add('correct');
       else if(i===state.selOpt) o.classList.add('wrong');
     });
+    state.answers[state.curQ] = state.selOpt;
     if(!state.weakTopics[q.tag]) state.weakTopics[q.tag]={correct:0,total:0};
     state.weakTopics[q.tag].total++;
     if(state.selOpt===q.ans){ state.correct++; state.weakTopics[q.tag].correct++; }
     else { state.wrong++; }
-    document.getElementById('sub-btn').textContent = 'अगला सवाल →';
-    document.getElementById('ad-strip').classList.add('show');
+    document.getElementById('sub-btn').textContent = state.curQ < state.qList.length-1 ? 'अगला सवाल →' : 'Result देखें';
+    document.getElementById('exp-box').classList.add('show');
+    document.getElementById('exp-box').scrollIntoView({behavior:'smooth',block:'nearest'});
   } else {
-    document.getElementById('ad-strip').classList.remove('show');
     nextQ();
   }
 }
 
-function unlockExp(){
-  document.getElementById('exp-box').classList.add('show');
-  document.getElementById('ad-strip').classList.remove('show');
-}
 
 function skipQ(){
   if(!state.answered){ state.skip++; nextQ(); }
@@ -792,6 +836,9 @@ function finishQuiz(){
   d.tests = (d.tests||0)+1;
   d.totalQ = (d.totalQ||0)+total;
   d.correct = (d.correct||0)+state.correct;
+  if(!d.history) d.history=[];
+  d.history.push({exam:state.cur||'MP', mode:state.mode||'topic', c:state.correct, t:total, pct:pct, date:new Date().toLocaleDateString('hi-IN')});
+  if(d.history.length>20) d.history=d.history.slice(-20);
   if(!d.weakTopics) d.weakTopics={};
   Object.entries(state.weakTopics).forEach(([t,v])=>{
     if(!d.weakTopics[t]) d.weakTopics[t]={correct:0,total:0};
@@ -801,6 +848,20 @@ function finishQuiz(){
   saveStorage(d);
   refreshHome();
   go('result');
+}
+
+function showReview(){
+  const L=['A','B','C','D'];
+  document.getElementById('review-body').innerHTML = state.qList.map((q,i)=>{
+    const u=state.answers[i]; const ok=u===q.ans; const sk=(u===undefined||u===-1);
+    return `<div class="ca-card" style="border-left:4px solid ${sk?'var(--amber)':ok?'var(--green)':'var(--red)'}">
+      <div class="q-tag">${q.tag}</div>
+      <div class="ca-headline">${i+1}. ${q.q}${q.qe&&q.qe!==q.q?`<div style="font-size:12px;color:var(--fg2);font-weight:400;font-family:var(--sans)">${q.qe}</div>`:''}</div>
+      ${q.opts.map((o,j)=>`<div style="font-size:13px;margin-top:6px;padding:6px 10px;border-radius:6px;font-family:var(--deva);${j===q.ans?'background:var(--green-bg);color:var(--green);font-weight:600':''}${(!sk&&j===u&&!ok)?'background:var(--red-bg);color:var(--red)':''}">${L[j]}) ${o}${q.optse&&q.optse[j]&&q.optse[j]!==o?` <span style="opacity:.7;font-family:var(--sans)">· ${q.optse[j]}</span>`:''}</div>`).join('')}
+      <div style="font-size:12px;color:var(--fg2);margin-top:8px;font-family:var(--deva)">${sk?'⏭ Skip किया':ok?'✅ सही':'❌ गलत'} ${q.exp?'• '+q.exp:''}</div>
+    </div>`;
+  }).join('');
+  go('review');
 }
 
 // ===== CURRENT AFFAIRS =====
@@ -814,10 +875,14 @@ function renderCA(){
       <div class="ca-headline">${c.headline}</div>
       <div class="ca-body">${c.body}</div>
       <div class="ca-footer">
-        <span class="ca-src">📌 ${c.src}</span>
-        <span class="ca-quiz" onclick="go('home')">Quiz लें →</span>
+        <span class="ca-src">📌 ${c.src||''}</span>
+        <span class="ca-src">${c.date||''}</span>
       </div>
     </div>`).join('');
+}
+function renderHomeCA(){
+  const c=CA_DATA[0]; const el=document.getElementById('home-ca'); if(!c||!el) return;
+  el.innerHTML=`<div class="ca-tag" style="${c.tagStyle||''}">${c.tag}</div><div class="ca-headline">${c.headline}</div><div style="font-size:12px;color:var(--fg3);margin-top:6px" class="hi">${c.date||''} • 2 min पढ़ें</div>`;
 }
 function caFilter(el, cat){
   caActive=cat;
@@ -837,7 +902,11 @@ function refreshDash(){
   document.getElementById('d-streak').textContent = (d.streak||0)+'🔥';
   const acc = d.totalQ ? Math.round((d.correct/d.totalQ)*100)+'%' : '–';
   document.getElementById('d-acc').textContent = acc;
-  document.getElementById('dash-exam').textContent = (state.cur||'MP') + ' Aspirant';
+  document.getElementById('dash-exam').textContent = (state.cur||d.exam||'MP Exam') + ' Aspirant';
+  // History
+  const hl=document.getElementById('history-list'); const h=(d.history||[]).slice().reverse();
+  hl.innerHTML = h.length ? h.map(x=>`<div class="wt-item"><div class="wt-icon" style="background:var(--primary-light)">📝</div><div class="wt-name">${x.exam} • ${x.mode==='full'?'Full Test':x.mode==='pyq'?'PYQ':'Topic Test'}<div style="font-size:11px;color:var(--fg3)">${x.date}</div></div><div class="wt-score" style="color:${x.pct>=60?'var(--green)':'var(--red)'}">${x.c}/${x.t}</div></div>`).join('')
+    : '<div style="padding:14px 16px;color:var(--fg3);font-family:var(--deva)">अभी कोई test नहीं</div>';
   // Weak topics
   const wt = d.weakTopics||{};
   const sorted = Object.entries(wt)
@@ -863,19 +932,35 @@ function resetData(){
 }
 
 // ===== INIT =====
-renderCA();
+renderCA(); renderHomeCA();
 setTimeout(()=>{
   const d = loadStorage();
   if(d.name){ refreshHome(); go('home'); }
   else { go('name-input'); }
 }, 2400);
 
-// Override go() to rebuild topics when navigating there
-const _go = go;
+// Override go(): rebuild topics, keep history for Android back button
+const _go = go; const navStack=[];
 window.go = function(id){
+  const cur=document.querySelector('.screen.active'); if(cur && cur.id!==id && cur.id!=='splash') navStack.push(cur.id);
+  if(navStack.length>20) navStack.shift();
   _go(id);
   if(id==='topics') buildTopics();
+  if(id==='dashboard') refreshDash();
+  window.scrollTo(0,0);
 };
+function goBack(){
+  const cur=document.querySelector('.screen.active')?.id;
+  if(document.getElementById('dlg').classList.contains('show')){ closeDlg(); return true; }
+  if(cur==='quiz'){ confirmQuit(); return true; }
+  if(cur==='home' || cur==='name-input' || cur==='splash') return false;
+  if(cur==='result'){ navStack.length=0; go('home'); return true; }
+  const prev=navStack.pop() || 'home'; _go(prev); if(prev==='topics') buildTopics(); if(prev==='dashboard') refreshDash(); return true;
+}
+try{
+  const App = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.App;
+  if(App){ App.addListener('backButton', ()=>{ if(!goBack()) App.exitApp(); }); }
+}catch(e){}
 
 // ===== PWA: Install prompt + Service Worker =====
 let deferredPrompt = null;
@@ -889,11 +974,12 @@ function installApp(){
 }
 window.addEventListener('appinstalled', ()=>{ document.getElementById('install-bar').classList.remove('show'); toast('App install हो गई! 🎉'); });
 (function(){
+  if(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()) return;
   const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
   const standalone = window.navigator.standalone === true || matchMedia('(display-mode: standalone)').matches;
   if(isIOS && !standalone){ document.getElementById('install-bar').classList.add('show'); }
 })();
-if('serviceWorker' in navigator && location.protocol.startsWith('http')){
+if('serviceWorker' in navigator && location.protocol.startsWith('http') && !(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform())){
   window.addEventListener('load', ()=>{ navigator.serviceWorker.register('sw.js').catch(()=>{}); });
 }
 </script>
