@@ -20,6 +20,39 @@ jobs:
           distribution: temurin
           java-version: 21
 
+      - name: Find www folder
+        run: |
+          if [ -f www/index.html ]; then echo "WWW=www" >> $GITHUB_ENV
+          elif [ -f mp-exam-pwa/www/index.html ]; then echo "WWW=mp-exam-pwa/www" >> $GITHUB_ENV
+          elif [ -f index.html ]; then
+            mkdir -p www/icons
+            cp index.html www/
+            cp manifest.json sw.js www/ 2>/dev/null || true
+            cp icon-*.png maskable-*.png www/icons/ 2>/dev/null || true
+            echo "WWW=www" >> $GITHUB_ENV
+          else echo "index.html nahi mila! upload karo."; ls -R; exit 1; fi
+
+      - name: Create config files
+        run: |
+          cat > package.json <<'EOF'
+          {
+            "name": "mp-exam",
+            "version": "1.0.0",
+            "private": true,
+            "dependencies": { "@capacitor/android": "^6.1.2", "@capacitor/core": "^6.1.2" },
+            "devDependencies": { "@capacitor/cli": "^6.1.2" }
+          }
+          EOF
+          cat > capacitor.config.json <<EOF
+          {
+            "appId": "in.mpexam.app",
+            "appName": "MP Exam",
+            "webDir": "$WWW",
+            "android": { "backgroundColor": "#0D2B7E" },
+            "server": { "androidScheme": "https" }
+          }
+          EOF
+
       - name: Install Capacitor
         run: npm install
 
@@ -29,10 +62,13 @@ jobs:
       - name: Set app icons
         run: |
           RES=android/app/src/main/res
-          for d in mdpi hdpi; do cp www/icons/icon-72.png $RES/mipmap-$d/ic_launcher.png; cp www/icons/icon-72.png $RES/mipmap-$d/ic_launcher_round.png; cp www/icons/icon-72.png $RES/mipmap-$d/ic_launcher_foreground.png; done
-          cp www/icons/icon-96.png  $RES/mipmap-xhdpi/ic_launcher.png;   cp www/icons/icon-96.png  $RES/mipmap-xhdpi/ic_launcher_round.png;   cp www/icons/icon-96.png  $RES/mipmap-xhdpi/ic_launcher_foreground.png
-          cp www/icons/icon-144.png $RES/mipmap-xxhdpi/ic_launcher.png;  cp www/icons/icon-144.png $RES/mipmap-xxhdpi/ic_launcher_round.png;  cp www/icons/icon-144.png $RES/mipmap-xxhdpi/ic_launcher_foreground.png
-          cp www/icons/icon-192.png $RES/mipmap-xxxhdpi/ic_launcher.png; cp www/icons/icon-192.png $RES/mipmap-xxxhdpi/ic_launcher_round.png; cp www/icons/icon-192.png $RES/mipmap-xxxhdpi/ic_launcher_foreground.png
+          I=$WWW/icons
+          if [ -f $I/icon-192.png ]; then
+            for d in mdpi hdpi; do cp $I/icon-72.png $RES/mipmap-$d/ic_launcher.png; cp $I/icon-72.png $RES/mipmap-$d/ic_launcher_round.png; cp $I/icon-72.png $RES/mipmap-$d/ic_launcher_foreground.png; done
+            cp $I/icon-96.png  $RES/mipmap-xhdpi/ic_launcher.png;   cp $I/icon-96.png  $RES/mipmap-xhdpi/ic_launcher_round.png;   cp $I/icon-96.png  $RES/mipmap-xhdpi/ic_launcher_foreground.png
+            cp $I/icon-144.png $RES/mipmap-xxhdpi/ic_launcher.png;  cp $I/icon-144.png $RES/mipmap-xxhdpi/ic_launcher_round.png;  cp $I/icon-144.png $RES/mipmap-xxhdpi/ic_launcher_foreground.png
+            cp $I/icon-192.png $RES/mipmap-xxxhdpi/ic_launcher.png; cp $I/icon-192.png $RES/mipmap-xxxhdpi/ic_launcher_round.png; cp $I/icon-192.png $RES/mipmap-xxxhdpi/ic_launcher_foreground.png
+          else echo "Icons nahi mile, default icon use hoga"; fi
 
       - name: Sync web assets
         run: npx cap sync android
