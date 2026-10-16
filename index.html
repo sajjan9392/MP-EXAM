@@ -168,7 +168,7 @@ html,body{height:100%;font-family:var(--sans);background:var(--bg);color:var(--f
 .timer{display:flex;align-items:center;gap:4px;background:var(--bg);border:1px solid var(--border);border-radius:20px;padding:4px 10px;font-size:13px;font-weight:600;font-variant-numeric:tabular-nums;color:var(--fg)}
 .quiz-body{padding:16px;flex:1;overflow-y:auto}
 .q-tag{display:inline-block;font-size:11px;font-weight:600;background:var(--primary-light);color:var(--primary);border-radius:5px;padding:3px 10px;margin-bottom:12px;font-family:var(--deva)}
-.q-text{font-size:15px;color:var(--fg);line-height:1.6;margin-bottom:18px;font-family:var(--deva)}
+.q-text{font-size:15px;color:var(--fg);line-height:1.6;margin-bottom:18px;font-family:var(--deva);white-space:pre-line}.q-text svg{display:block;max-width:100%;height:auto;margin:8px auto;white-space:normal}.exp-text{white-space:pre-line}
 .option{display:flex;align-items:center;gap:12px;padding:13px 14px;border:1.5px solid var(--border);border-radius:10px;margin-bottom:10px;cursor:pointer;background:var(--bg2);transition:all 0.15s}
 .option:hover{border-color:var(--primary)}
 .option.sel{border-color:var(--primary);background:var(--primary-light)}
@@ -382,7 +382,7 @@ body{padding-top:env(safe-area-inset-top,0px)}
   <div class="topbar"><div class="back-btn" onclick="go('testtype')">←</div><div class="topbar-title" id="setup-title">Test Setup</div></div>
   <div class="scroll-body">
     <div id="sec-year">
-      <div class="setup-lbl">वर्ष चुनें (पूरा प्रश्नपत्र)</div>
+      <div class="setup-lbl">प्रश्नपत्र चुनें (पूरा पेपर, मूल क्रम में)</div>
       <div class="chips" id="chip-year"></div>
     </div>
     <div id="sec-spec" class="setup-note" style="padding-top:14px;font-size:13px;color:var(--fg)"></div>
@@ -491,7 +491,7 @@ body{padding-top:env(safe-area-inset-top,0px)}
     <div class="dash-section">Weak Topics (इनपर Practice करें)</div>
     <div id="weak-topics-list"></div>
     <div class="dash-section">App के बारे में</div>
-    <div class="wt-item"><div class="wt-icon" style="background:var(--primary-light)">ℹ️</div><div class="wt-name">MP Exam v1.7 — MP के सरकारी exams की तैयारी<div id="bank-info" style="font-size:11px;color:var(--fg3)"></div><div style="font-size:11px;color:var(--fg3)">Offline • कोई login नहीं • Data सिर्फ आपके phone पर</div></div></div>
+    <div class="wt-item"><div class="wt-icon" style="background:var(--primary-light)">ℹ️</div><div class="wt-name">MP Exam v1.9 — MP के सरकारी exams की तैयारी<div id="bank-info" style="font-size:11px;color:var(--fg3)"></div><div style="font-size:11px;color:var(--fg3)">Offline • कोई login नहीं • Data सिर्फ आपके phone पर</div></div></div>
     <a class="wt-item" href="privacy.html" style="text-decoration:none"><div class="wt-icon" style="background:var(--primary-light)">🔒</div><div class="wt-name">Privacy Policy</div><div class="wt-score" style="color:var(--fg3)">›</div></a>
     <div style="padding:16px 16px 8px">
       <button class="btn btn-outline" onclick="resetData()" style="width:100%;color:var(--red);border-color:var(--red)">🗑 Data Reset करें</button>
@@ -774,7 +774,7 @@ const EXAM_SPEC = {
   'Van Rakshak':{q:100,min:120,note:'वन रक्षक pattern'}, 'Jail Prahari':{q:100,min:120,note:'जेल प्रहरी pattern'}
 };
 const PYQ_MIN_PER_Q = 1.2; // 100 Q = 120 min
-const setup = { diff:'all', lang:'both', count:20, year:null };
+const setup = { diff:'all', lang:'both', count:20, paper:null };
 try{ Object.assign(setup, JSON.parse(localStorage.getItem('mpexam_setup')||'{}')); }catch(e){}
 function initChips(){
   [['chip-diff','diff'],['chip-lang','lang'],['chip-count','count']].forEach(([id,key])=>{
@@ -793,18 +793,30 @@ function basePool(){
 }
 function updateSetupNote(){
   const el=document.getElementById('setup-note');
-  if(state.mode==='pyq'){ const n=QUESTIONS.filter(q=>q.year===setup.year).length; el.textContent=`${setup.year} का पूरा प्रश्नपत्र • ${n} प्रश्न • ${Math.round(n*PYQ_MIN_PER_Q)} मिनट • मूल क्रम में`; return; }
+  if(state.mode==='pyq'){ const n=paperQs(setup.paper).length; el.textContent= n? `${setup.paper} • ${n} प्रश्न • ${Math.round(n*PYQ_MIN_PER_Q)} मिनट • मूल क्रम में` : ''; return; }
   const n=basePool().filter(diffOk).length;
   if(state.mode==='full'){ const sp=EXAM_SPEC[state.cur]||{q:100,min:120}; el.textContent=`${Math.min(sp.q,n)} प्रश्न • ${sp.min} मिनट • इस चयन में ${n} प्रश्न उपलब्ध`; return; }
   el.textContent = `${setup.count} प्रश्न • ${setup.count} मिनट • इस चयन में ${n} प्रश्न उपलब्ध`;
 }
-function pyqYears(){ const m={}; QUESTIONS.forEach(q=>{ if(q.year) m[q.year]=(m[q.year]||0)+1; }); return Object.keys(m).map(Number).sort((a,b)=>b-a).map(y=>({y,n:m[y]})); }
+// ===== PYQ papers: each paper = exam + year (+ shift), shown only under the exams it belongs to =====
+function paperOf(q){ return q.paper || (q.src==='MPPSC/MPSFS PYQ' && q.year ? 'MPPSC प्रारंभिक '+q.year : null); }
+function examsOf(q){ return q.exams || (q.src==='MPPSC/MPSFS PYQ' ? ['MPPSC','MPSFS'] : []); }
+function pyqPapers(exam){
+  const m={};
+  QUESTIONS.forEach(q=>{ const p=paperOf(q); if(!p || !examsOf(q).includes(exam)) return; (m[p]=m[p]||{name:p,n:0,y:q.year||0}).n++; });
+  return Object.values(m).sort((a,b)=>(b.y-a.y)||a.name.localeCompare(b.name));
+}
+function paperQs(name){
+  const l=QUESTIONS.filter(q=>paperOf(q)===name);
+  return l.some(q=>q.pno) ? l.slice().sort((a,b)=>(a.pno||0)-(b.pno||0)) : l;  // original paper order
+}
 function initYearChips(){
-  const box=document.getElementById('chip-year'); const ys=pyqYears();
-  if(!ys.length){ box.innerHTML='<div class="setup-note" style="padding:0">PYQ जल्द जोड़े जाएँगे</div>'; return; }
-  if(!setup.year || !ys.some(x=>x.y===setup.year)) setup.year=ys[0].y;
-  box.innerHTML=ys.map(x=>`<div class="chip ${x.y===setup.year?'active':''}" data-v="${x.y}">${x.y} <span style="font-weight:400;opacity:.8">(${x.n})</span></div>`).join('');
-  box.querySelectorAll('.chip').forEach(c=>{ c.onclick=()=>{ setup.year=parseInt(c.dataset.v); box.querySelectorAll('.chip').forEach(x=>x.classList.remove('active')); c.classList.add('active'); updateSetupNote(); }; });
+  const box=document.getElementById('chip-year'); const ps=pyqPapers(state.cur);
+  if(!ps.length){ setup.paper=null; box.innerHTML='<div class="setup-note" style="padding:0">⏳ In progress — इस exam के पुराने प्रश्नपत्र अभी जोड़े जा रहे हैं।</div>'; return; }
+  if(!setup.paper || !ps.some(x=>x.name===setup.paper)) setup.paper=ps[0].name;
+  box.style.flexDirection='column';
+  box.innerHTML=ps.map(x=>`<div class="chip ${x.name===setup.paper?'active':''}" data-v="${x.name}" style="width:100%;box-sizing:border-box;display:flex;justify-content:space-between"><span>${x.name}</span><span style="font-weight:400;opacity:.8">${x.n} प्रश्न</span></div>`).join('');
+  box.querySelectorAll('.chip').forEach(c=>{ c.onclick=()=>{ setup.paper=c.dataset.v; box.querySelectorAll('.chip').forEach(x=>x.classList.remove('active')); c.classList.add('active'); updateSetupNote(); }; });
 }
 function openSetup(mode, title){
   state.mode=mode; document.getElementById('setup-title').textContent=title;
@@ -820,7 +832,6 @@ function startTopicTest(){
 }
 function startFullTest(){ openSetup('full','Full Length Test — Setup'); }
 function startPYQ(){
-  if(!QUESTIONS.some(q=>q.year)) toast('PYQ जल्द जोड़े जाएँगे — अभी mixed test');
   openSetup('pyq','Previous Year Papers — Setup');
 }
 function startFromSetup(){
@@ -829,15 +840,40 @@ function startFromSetup(){
   launchQuiz(setup.count);
 }
 function launchPYQ(){
-  const list=QUESTIONS.filter(q=>q.year===setup.year); // original paper order
-  if(!list.length){ toast('इस वर्ष के प्रश्न उपलब्ध नहीं'); return; }
+  const list=paperQs(setup.paper);
+  if(!list.length){ toast('इस exam के प्रश्नपत्र अभी उपलब्ध नहीं'); return; }
   beginQuiz(list, Math.round(list.length*PYQ_MIN_PER_Q));
 }
 function startAgain(){ if(state.mode==='pyq') launchPYQ(); else if(state.mode==='full'){ const sp=EXAM_SPEC[state.cur]||{q:100,min:120}; launchQuiz(sp.q, sp.min); } else launchQuiz(state.qList.length); }
 
 // ===== QUIZ ENGINE =====
 function shuffle(a){ a=a.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+// Full Length Test: sections like the real paper (subjects -> number of questions)
+const GK=['hist','geo','polity','eco','mp','ca','gk'];
+const FULL_MIX = {
+  'MPPSC':[[['hist'],15],[['mp'],17],[['geo'],10],[['polity'],12],[['eco'],10],[['sci'],12],[['env'],6],[['comp'],8],[['ca'],10]],
+  'MPSFS':[[['hist'],15],[['mp'],17],[['geo'],10],[['polity'],12],[['eco'],10],[['sci'],12],[['env'],6],[['comp'],8],[['ca'],10]],
+  'Police Constable':[[GK,40],[['reason'],30],[['sci'],15],[['math'],15]],
+  'ASI':[[GK,40],[['reason'],20],[['math'],15],[['hindi'],15],[['eng'],10]],
+  'Group 1':[[GK,50],[['hindi'],25],[['eng'],25],[['math'],25],[['reason'],25],[['sci'],25],[['comp'],25]],
+  'Group 2':[[GK,50],[['hindi'],25],[['eng'],25],[['math'],25],[['reason'],25],[['sci'],25],[['comp'],25]],
+  'Group 2B':[[GK,50],[['hindi'],30],[['math'],30],[['reason'],30],[['sci'],30],[['comp'],30]],
+  'Van Rakshak':[[GK,30],[['sci','env'],15],[['math'],15],[['reason'],15],[['hindi'],15],[['eng'],10]],
+  'Jail Prahari':[[GK,30],[['sci'],15],[['math'],15],[['reason'],15],[['hindi'],15],[['eng'],10]]
+};
+function fullMixList(exam,total){
+  const mix=FULL_MIX[exam]; if(!mix) return null;
+  const out=[];
+  mix.forEach(([subs,n])=>{
+    const by=subs.map(sb=>shuffle(QUESTIONS.filter(q=>q.sub===sb && !q.paper && diffOk(q)))).filter(a=>a.length);
+    // share n equally among the subjects of this section; leftovers from small subjects go to bigger ones
+    let need=n, i=0, guard=0;
+    while(need>0 && by.some(a=>a.length) && guard<10000){ const a=by[i%by.length]; if(a.length){ out.push(a.pop()); need--; } i++; guard++; }
+  });
+  return out.slice(0,total);
+}
 function launchQuiz(count, minutes){
+  if(state.mode==='full'){ const l=fullMixList(state.cur,count); if(l && l.length>=Math.min(20,count)){ beginQuiz(l, minutes); return; } }
   let pool = basePool();
   const filtered = pool.filter(diffOk);
   if(filtered.length >= 5) pool = filtered; else if(setup.diff!=='all' && pool.length) toast('इस कठिनाई के कम प्रश्न हैं — सभी स्तर मिलाए गए');
@@ -869,7 +905,7 @@ function renderQ(){
   state.selOpt = -1; state.answered = false;
   document.getElementById('quiz-body').innerHTML = `
     <div class="q-tag">${q.tag}</div>
-    <div class="q-text">${qText(q)}${q.year?` <span class="badge badge-amber" style="font-size:10px;vertical-align:middle">PYQ ${q.year}</span>`:''}${setup.lang==='both'&&q.qe&&q.qe!==q.q?`<div style="font-size:13px;color:var(--fg2);margin-top:6px;font-family:var(--sans)">${q.qe}</div>`:''}</div>
+    <div class="q-text">${qText(q)}${(paperOf(q)||q.year)?` <span class="badge badge-amber" style="font-size:10px;vertical-align:middle">${paperOf(q)||('PYQ '+q.year)}</span>`:''}${q.ai?` <span class="badge" style="font-size:10px;vertical-align:middle;opacity:.7">AI</span>`:''}${setup.lang==='both'&&q.qe&&q.qe!==q.q&&!/<svg/.test(q.q)?`<div style="font-size:13px;color:var(--fg2);margin-top:6px;font-family:var(--sans)">${q.qe}</div>`:''}</div>
     ${q.opts.map((o,i)=>`
       <div class="option" id="opt${i}" onclick="pickOpt(${i})">
         <div class="opt-letter">${['A','B','C','D'][i]}</div>
@@ -972,7 +1008,7 @@ function finishQuiz(){
   d.totalQ = (d.totalQ||0)+total;
   d.correct = (d.correct||0)+state.correct;
   if(!d.history) d.history=[];
-  d.history.push({exam:state.cur||'MP', mode:state.mode||'topic', year: state.mode==='pyq'?setup.year:undefined, c:state.correct, t:total, pct:pct, date:new Date().toLocaleDateString('hi-IN')});
+  d.history.push({exam:state.cur||'MP', mode:state.mode||'topic', year: state.mode==='pyq'?setup.paper:undefined, c:state.correct, t:total, pct:pct, date:new Date().toLocaleDateString('hi-IN')});
   if(d.history.length>20) d.history=d.history.slice(-20);
   if(!d.weakTopics) d.weakTopics={};
   Object.entries(state.weakTopics).forEach(([t,v])=>{
@@ -1040,7 +1076,7 @@ function refreshDash(){
   document.getElementById('dash-exam').textContent = (state.cur||d.exam||'MP Exam') + ' Aspirant';
   // History
   const hl=document.getElementById('history-list'); const h=(d.history||[]).slice().reverse();
-  hl.innerHTML = h.length ? h.map(x=>`<div class="wt-item"><div class="wt-icon" style="background:var(--primary-light)">📝</div><div class="wt-name">${x.exam} • ${x.mode==='full'?'Full Test':x.mode==='pyq'?('PYQ '+(x.year||'')):'Topic Test'}<div style="font-size:11px;color:var(--fg3)">${x.date}</div></div><div class="wt-score" style="color:${x.pct>=60?'var(--green)':'var(--red)'}">${x.c}/${x.t}</div></div>`).join('')
+  hl.innerHTML = h.length ? h.map(x=>`<div class="wt-item"><div class="wt-icon" style="background:var(--primary-light)">📝</div><div class="wt-name">${x.exam} • ${x.mode==='full'?'Full Test':x.mode==='pyq'?(String(x.year||'').startsWith('MP')||isNaN(x.year)?(x.year||'PYQ'):('PYQ '+x.year)):'Topic Test'}<div style="font-size:11px;color:var(--fg3)">${x.date}</div></div><div class="wt-score" style="color:${x.pct>=60?'var(--green)':'var(--red)'}">${x.c}/${x.t}</div></div>`).join('')
     : '<div style="padding:14px 16px;color:var(--fg3);font-family:var(--deva)">अभी कोई test नहीं</div>';
   // Weak topics
   const wt = d.weakTopics||{};
