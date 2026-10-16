@@ -1,9 +1,4 @@
 # MP Exam — Android build (GitHub Actions)
-# Output (Actions → run → Artifacts):
-#   mp-exam-release  → app-release.aab (Play Store) + app-release.apk (signed)
-#   mp-exam-debug    → app-debug.apk (testing)
-# Signed release ke liye Settings → Secrets me: KEYSTORE_BASE64, KEYSTORE_PASSWORD, KEY_ALIAS, KEY_PASSWORD
-
 name: Build Android App
 
 on:
@@ -34,26 +29,21 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Convert Excel question banks (questions/*.xlsx -> questions.json)
-        run: |
-          if ls questions/*.xlsx >/dev/null 2>&1; then
-            pip install openpyxl -q
-            python3 convert_xlsx.py
-          else
-            echo "No Excel files in questions/ — using built-in questions.json"
-          fi
-
-      - name: Assemble www folder
+      - name: Assemble www folder (always fresh)
         run: |
           set -e
-          if [ -f www/index.html ]; then echo "www already present"
-          elif [ -f index.html ]; then
-            mkdir -p www
-            cp index.html manifest.json sw.js privacy.html www/
-            cp questions.json ca.json www/ 2>/dev/null || true
-            cp icon-*.png maskable-*.png www/ 2>/dev/null || true
-          else echo "index.html nahi mila!"; ls; exit 1; fi
-          ls www
+          rm -rf www && mkdir -p www
+          if [ ! -f index.html ]; then echo "::error::index.html repo me nahi mila"; ls; exit 1; fi
+          if [ ! -f qindex.json ]; then echo "::error::qindex.json nahi mila - latest zip ki saari files upload karo"; ls; exit 1; fi
+          cp index.html qindex.json www/
+          for f in $(python3 -c "import json;print(' '.join(json.load(open('qindex.json'))['files']))"); do
+            if [ ! -f "$f" ]; then echo "::error::$f nahi mila - zip ki ye file bhi upload karo"; exit 1; fi
+            cp "$f" www/
+          done
+          cp manifest.json sw.js privacy.html ca.json www/ 2>/dev/null || true
+          cp icon-*.png maskable-*.png www/ 2>/dev/null || true
+          echo "Questions in this build:"; python3 -c "import json;print(json.load(open('qindex.json'))['total'])"
+          ls -la www
 
       - name: Create Capacitor config
         run: |
@@ -95,7 +85,6 @@ jobs:
           p='android/app/build.gradle'; s=open(p).read()
           s=re.sub(r'versionCode\s+\d+', 'versionCode '+os.environ['VERSION_CODE'], s)
           s=re.sub(r'versionName\s+"[^"]*"', 'versionName "'+os.environ['VERSION_NAME']+'"', s)
-          # Fixed debug key (debug.keystore in repo) -> test APKs update in place, no uninstall needed
           if os.path.exists('debug.keystore'):
               dbg='''    signingConfigs {
                   debug {
@@ -107,7 +96,6 @@ jobs:
               }
           '''
               s=s.replace('android {\n', 'android {\n'+dbg, 1)
-              print("fixed debug key enabled")
           if os.environ.get('KEYSTORE_BASE64'):
               sc='''    signingConfigs {
                   release {
@@ -130,9 +118,6 @@ jobs:
               else:
                   s=s.replace('android {\n', 'android {\n'+sc, 1)
               s=re.sub(r'(buildTypes\s*\{\s*release\s*\{)', r'\1\n            signingConfig signingConfigs.release', s, 1)
-              print("release signing enabled")
-          else:
-              print("No KEYSTORE_BASE64 secret -> only debug APK will be built")
           open(p,'w').write(s)
           PY
           if [ -n "$KEYSTORE_BASE64" ]; then echo "$KEYSTORE_BASE64" | base64 -d > android/app/release.jks; fi
