@@ -480,7 +480,7 @@ body{padding-top:env(safe-area-inset-top,0px)}
     <div class="dash-section">Weak Topics (इनपर Practice करें)</div>
     <div id="weak-topics-list"></div>
     <div class="dash-section">App के बारे में</div>
-    <div class="wt-item"><div class="wt-icon" style="background:var(--primary-light)">ℹ️</div><div class="wt-name">MP Exam v1.5 — MP के सरकारी exams की तैयारी<div style="font-size:11px;color:var(--fg3)">Offline • कोई login नहीं • Data सिर्फ आपके phone पर</div></div></div>
+    <div class="wt-item"><div class="wt-icon" style="background:var(--primary-light)">ℹ️</div><div class="wt-name">MP Exam v1.6 — MP के सरकारी exams की तैयारी<div id="bank-info" style="font-size:11px;color:var(--fg3)"></div><div style="font-size:11px;color:var(--fg3)">Offline • कोई login नहीं • Data सिर्फ आपके phone पर</div></div></div>
     <a class="wt-item" href="privacy.html" style="text-decoration:none"><div class="wt-icon" style="background:var(--primary-light)">🔒</div><div class="wt-name">Privacy Policy</div><div class="wt-score" style="color:var(--fg3)">›</div></a>
     <div style="padding:16px 16px 8px">
       <button class="btn btn-outline" onclick="resetData()" style="width:100%;color:var(--red);border-color:var(--red)">🗑 Data Reset करें</button>
@@ -557,16 +557,23 @@ function bucketOf(t){
   return 'gk';
 }
 // GK topics ("GK (भारत + MP)") should pull from several buckets
+// Syllabus topic -> subject(s). Only "GK (भारत + MP)"-type topics combine subjects;
+// every other topic maps to exactly one subject, so tests never mix subjects.
 function bucketsForTopic(t){
   const b=bucketOf(t);
-  if(b==='gk' || /^gk/i.test(t.trim())) return ['mp','hist','geo','polity','eco','env','sci','gk'];
-  if(b==='ca') return ['ca','mp','eco','sci','env'];
+  if(/^gk/i.test(t.trim())) return ['gk','mp','hist','geo','polity','eco'];
   return [b];
 }
-function examBuckets(exam){
-  const s=new Set(); (SYLLABUS[exam]||[]).forEach(t=>bucketsForTopic(t).forEach(b=>s.add(b))); return s;
+const SUB_ORDER=['mp','hist','geo','polity','eco','env','sci','comp','ca','gk','reason','math','hindi','eng','agri'];
+function examSubs(exam){
+  const s=new Set(); (SYLLABUS[exam]||[]).forEach(t=>bucketsForTopic(t).forEach(b=>s.add(b)));
+  return SUB_ORDER.filter(x=>s.has(x));
 }
-function updateQCount(){ const el=document.getElementById('qcount'); if(el) el.textContent = QUESTIONS.length+' प्रश्न'; }
+let BANK_INFO={src:'app', files:0};
+function updateQCount(){
+  const el=document.getElementById('qcount'); if(el) el.textContent = QUESTIONS.length.toLocaleString('en-IN')+' प्रश्न';
+  const bi=document.getElementById('bank-info'); if(bi) bi.textContent = `प्रश्न बैंक: ${QUESTIONS.length.toLocaleString('en-IN')} प्रश्न • ${BANK_INFO.src==='chunks'?BANK_INFO.files+' files से':BANK_INFO.src==='single'?'questions.json से':'⚠️ सिर्फ app के अंदर वाले (q-files नहीं मिलीं)'}`;
+}
 async function loadData(){
   // 1) split bank: qindex.json -> q-01.json, q-02.json ...
   let loaded=false;
@@ -576,11 +583,11 @@ async function loadData(){
       const idx=await r.json();
       const parts=await Promise.all((idx.files||[]).map(f=>fetch(f,{cache:'no-cache'}).then(x=>x.ok?x.json():[]).catch(()=>[])));
       const all=[].concat(...parts);
-      if(all.length>QUESTIONS.length){ QUESTIONS=all; loaded=true; }
+      if(all.length>QUESTIONS.length){ QUESTIONS=all; loaded=true; BANK_INFO={src:'chunks',files:(idx.files||[]).length}; }
     }
   }catch(e){}
   // 2) single-file bank (older builds / web)
-  if(!loaded){ try{ const r=await fetch('questions.json',{cache:'no-cache'}); if(r.ok){ const j=await r.json(); if(Array.isArray(j)&&j.length>QUESTIONS.length) QUESTIONS=j; } }catch(e){} }
+  if(!loaded){ try{ const r=await fetch('questions.json',{cache:'no-cache'}); if(r.ok){ const j=await r.json(); if(Array.isArray(j)&&j.length>QUESTIONS.length){ QUESTIONS=j; BANK_INFO={src:'single',files:1}; } } }catch(e){} }
   try{ const r=await fetch('ca.json',{cache:'no-cache'}); if(r.ok){ const j=await r.json(); if(Array.isArray(j)&&j.length){ CA_DATA=j; renderCA(); renderHomeCA(); } } }catch(e){}
   updateQCount();
 }
@@ -589,7 +596,7 @@ loadData();
 // ===== STATE =====
 let state = {
   cur: null, // current exam
-  selTopics: new Set(),
+  selTopics: new Set(), selTags: new Set(),
   qList: [], curQ: 0, selOpt: -1, answered: false,
   correct: 0, wrong: 0, skip: 0,
   timerInt: null, timerSec: 1200,
@@ -663,67 +670,43 @@ function goExam(name){
 }
 
 // ===== TOPICS =====
-function countFor(topic){
-  const bs=new Set(bucketsForTopic(topic));
-  // exact tag match counts first, else bucket
-  const exact=QUESTIONS.filter(q=>q.tag===topic).length;
-  if(exact>=5) return exact;
-  return QUESTIONS.filter(q=>bs.has(q.sub)).length;
-}
-function poolFor(topics){
-  const tset=new Set(topics); const bs=new Set(); topics.forEach(t=>bucketsForTopic(t).forEach(b=>bs.add(b)));
-  let exact=QUESTIONS.filter(q=>tset.has(q.tag));
-  let byB=QUESTIONS.filter(q=>bs.has(q.sub) && !tset.has(q.tag));
-  return exact.concat(byB);
-}
+// Topic list comes from the questions actually in the bank (subject -> topic tags),
+// so only topics that have questions are shown, with their real counts.
+const tkey=(q)=>q.sub+'|'+(q.tag||'');
+function poolFor(){ return QUESTIONS.filter(q=>state.selTags.has(tkey(q))); }
 function buildTopics(){
-  const topics = SYLLABUS[state.cur] || [];
-  state.selTopics.clear();
-  const container = document.getElementById('topic-list');
-  container.innerHTML = '';
-  let groups = {};
-  topics.forEach(t=>{
-    const g = BUCKET_NAME[bucketOf(t)] || 'सामान्य ज्ञान';
-    if(!groups[g]) groups[g]=[];
-    groups[g].push(t);
-  });
-  Object.entries(groups).forEach(([g,ts])=>{
-    const gl = document.createElement('div');
-    gl.innerHTML = `<div class="group-label">${g}</div>`;
-    ts.forEach(t=>{
-      const qi = countFor(t);
-      const d = document.createElement('div');
-      d.className = 'topic-item';
-      d.dataset.topic = t;
-      d.innerHTML = `<div class="topic-check" id="tc-${t.replace(/\s/g,'_')}"></div><div class="topic-name">${t}</div><div class="topic-q">${qi} प्रश्न</div>`;
-      d.onclick = ()=>toggleTopic(t,d);
-      gl.appendChild(d);
+  state.selTags=new Set();
+  const container=document.getElementById('topic-list'); container.innerHTML='';
+  const subs=examSubs(state.cur); const missing=[];
+  subs.forEach(sub=>{
+    const counts={}; QUESTIONS.forEach(q=>{ if(q.sub===sub){ const t=q.tag||BUCKET_NAME[sub]; counts[t]=(counts[t]||0)+1; } });
+    const tags=Object.entries(counts).sort((a,b)=>b[1]-a[1]);
+    if(!tags.length){ missing.push(BUCKET_NAME[sub]||sub); return; }
+    const total=tags.reduce((a,[,n])=>a+n,0);
+    const gl=document.createElement('div');
+    const head=document.createElement('div'); head.className='topic-item'; head.style.background='var(--bg)';
+    head.innerHTML=`<div class="topic-check"></div><div class="topic-name" style="font-weight:700">${BUCKET_NAME[sub]||sub} — सभी</div><div class="topic-q">${total} प्रश्न</div>`;
+    gl.appendChild(head);
+    const rows=[];
+    tags.forEach(([t,n])=>{
+      const k=sub+'|'+t; const d=document.createElement('div'); d.className='topic-item'; d.dataset.k=k;
+      d.innerHTML=`<div class="topic-check"></div><div class="topic-name">${t}</div><div class="topic-q">${n} प्रश्न</div>`;
+      d.onclick=()=>{ setTag(k,d,!state.selTags.has(k)); syncHead(); updateStartBtn(); };
+      rows.push(d); gl.appendChild(d);
     });
+    const syncHead=()=>{ const all=rows.every(r=>state.selTags.has(r.dataset.k)); const ch=head.querySelector('.topic-check'); ch.classList.toggle('sel',all); ch.textContent=all?'✓':''; };
+    head.onclick=()=>{ const all=rows.every(r=>state.selTags.has(r.dataset.k)); rows.forEach(r=>setTag(r.dataset.k,r,!all)); syncHead(); updateStartBtn(); };
     container.appendChild(gl);
   });
+  if(missing.length){ const n=document.createElement('div'); n.className='setup-note'; n.style.padding='14px 16px 24px'; n.textContent='इन विषयों के प्रश्न अभी जोड़े नहीं गए: '+missing.join(', '); container.appendChild(n); }
+  if(!container.children.length){ container.innerHTML='<div class="setup-note" style="padding:24px 16px">इस exam के प्रश्न अभी जोड़े जा रहे हैं।</div>'; }
   updateStartBtn();
 }
-
-function toggleTopic(t, row){
-  const ch = row.querySelector('.topic-check');
-  if(state.selTopics.has(t)){ state.selTopics.delete(t); ch.classList.remove('sel'); ch.textContent=''; }
-  else { state.selTopics.add(t); ch.classList.add('sel'); ch.textContent='✓'; }
-  updateStartBtn();
-}
-
-function selAll(){
-  document.querySelectorAll('.topic-item').forEach(row=>{
-    const t = row.dataset.topic;
-    state.selTopics.add(t);
-    const ch = row.querySelector('.topic-check');
-    ch.classList.add('sel'); ch.textContent='✓';
-  });
-  updateStartBtn();
-}
-
+function setTag(k,row,on){ const ch=row.querySelector('.topic-check'); if(on){ state.selTags.add(k); ch.classList.add('sel'); ch.textContent='✓'; } else { state.selTags.delete(k); ch.classList.remove('sel'); ch.textContent=''; } }
+function selAll(){ document.querySelectorAll('#topic-list .topic-item').forEach(r=>{ if(r.dataset.k) setTag(r.dataset.k,r,true); else { const c=r.querySelector('.topic-check'); c.classList.add('sel'); c.textContent='✓'; } }); updateStartBtn(); }
 function updateStartBtn(){
-  const n = state.selTopics.size;
-  document.getElementById('start-btn').textContent = n ? `Test शुरू करें (${n} topics)` : 'Topic चुनें';
+  const n=poolFor().length; const k=state.selTags?state.selTags.size:0;
+  document.getElementById('start-btn').textContent = k ? `Test शुरू करें (${k} topic • ${n} प्रश्न)` : 'Topic चुनें';
 }
 
 // Official exam pattern (Full Length Test)
@@ -747,10 +730,9 @@ function initChips(){
 }
 function diffOk(q){ const d=q.d||3; return setup.diff==='all' || (setup.diff==='easy'&&d<=2) || (setup.diff==='medium'&&d===3) || (setup.diff==='hard'&&d>=4); }
 function basePool(){
-  let pool = poolFor([...state.selTopics]);
-  if(state.mode==='pyq'){ const py=pool.filter(q=>q.year); if(py.length>=10) pool=py; }
-  if(pool.length < 5) pool = QUESTIONS;
-  return pool;
+  if(state.mode==='topic') return poolFor();
+  const subs=new Set(examSubs(state.cur));
+  return QUESTIONS.filter(q=>subs.has(q.sub));
 }
 function updateSetupNote(){
   const el=document.getElementById('setup-note');
@@ -776,12 +758,11 @@ function openSetup(mode, title){
   initChips(); updateSetupNote(); go('setup');
 }
 function startTopicTest(){
-  if(!state.selTopics.size){ toast('कम से कम एक topic चुनें'); return; }
+  if(!state.selTags || !state.selTags.size){ toast('कम से कम एक topic चुनें'); return; }
   openSetup('topic','Topic Test — Setup');
 }
-function startFullTest(){ state.selTopics = new Set(SYLLABUS[state.cur]||[]); openSetup('full','Full Length Test — Setup'); }
+function startFullTest(){ openSetup('full','Full Length Test — Setup'); }
 function startPYQ(){
-  state.selTopics = new Set(SYLLABUS[state.cur]||[]);
   if(!QUESTIONS.some(q=>q.year)) toast('PYQ जल्द जोड़े जाएँगे — अभी mixed test');
   openSetup('pyq','Previous Year Papers — Setup');
 }
@@ -802,7 +783,8 @@ function shuffle(a){ a=a.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.fl
 function launchQuiz(count, minutes){
   let pool = basePool();
   const filtered = pool.filter(diffOk);
-  if(filtered.length >= 5) pool = filtered; else if(setup.diff!=='all') toast('इस कठिनाई के कम प्रश्न हैं — सभी स्तर मिलाए गए');
+  if(filtered.length >= 5) pool = filtered; else if(setup.diff!=='all' && pool.length) toast('इस कठिनाई के कम प्रश्न हैं — सभी स्तर मिलाए गए');
+  if(!pool.length){ toast('इस चयन में अभी प्रश्न नहीं हैं'); return; }
   pool = shuffle(pool);
   beginQuiz(pool.slice(0, Math.min(count, pool.length)), minutes);
 }
