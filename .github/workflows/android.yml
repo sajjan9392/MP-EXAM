@@ -1,4 +1,10 @@
-# MP Exam — Android build (GitHub Actions)
+# Pariksha Sarthi — Android build (GitHub Actions) • Capacitor 8 • targetSdk 36 (Android 16)
+# Har push par chalega. Output (Actions → run → Artifacts):
+#   pariksha-sarthi-release  → app-release.aab (Play Store ke liye) + app-release.apk (signed, direct install)
+#   pariksha-sarthi-debug    → app-debug.apk  (sirf testing)
+# Signed release ke liye repo Settings → Secrets me ye 4 secrets chahiye:
+#   KEYSTORE_BASE64, KEYSTORE_PASSWORD, KEY_ALIAS, KEY_PASSWORD   (README dekho)
+
 name: Build Android App
 
 on:
@@ -29,19 +35,28 @@ jobs:
         with:
           python-version: "3.12"
 
+      - name: Convert Excel question banks (questions/*.xlsx -> questions.json)
+        run: |
+          if false; then
+            pip install openpyxl -q
+            python3 convert_xlsx.py
+          else
+            echo "No Excel files in questions/ — using built-in questions.json"
+          fi
+
       - name: Assemble www folder (always fresh)
         run: |
           set -e
           rm -rf www && mkdir -p www
           if [ ! -f index.html ]; then echo "::error::index.html repo me nahi mila"; ls; exit 1; fi
-          if [ ! -f qindex.json ]; then echo "::error::qindex.json nahi mila - latest zip ki saari files upload karo"; ls; exit 1; fi
+          if [ ! -f qindex.json ]; then echo "::error::qindex.json nahi mila - latest zip ki saari files (index.html, qindex.json, q-01.json ...) upload karo"; ls; exit 1; fi
           cp index.html qindex.json www/
           for f in $(python3 -c "import json;print(' '.join(json.load(open('qindex.json'))['files']))"); do
             if [ ! -f "$f" ]; then echo "::error::$f nahi mila - zip ki ye file bhi upload karo"; exit 1; fi
             cp "$f" www/
           done
           cp manifest.json sw.js privacy.html ca.json www/ 2>/dev/null || true
-          cp icon-*.png maskable-*.png www/ 2>/dev/null || true
+          cp icon-*.png maskable-*.png logo*.png www/ 2>/dev/null || true
           echo "Questions in this build:"; python3 -c "import json;print(json.load(open('qindex.json'))['total'])"
           ls -la www
 
@@ -49,32 +64,52 @@ jobs:
         run: |
           cat > package.json <<'EOF'
           {
-            "name": "mp-exam", "version": "1.0.0", "private": true,
-            "dependencies": { "@capacitor/android": "^6.1.2", "@capacitor/core": "^6.1.2", "@capacitor/app": "^6.0.1" },
-            "devDependencies": { "@capacitor/cli": "^6.1.2" }
+            "name": "pariksha-sarthi", "version": "2.0.0", "private": true,
+            "dependencies": { "@capacitor/android": "^8.0.0", "@capacitor/core": "^8.0.0", "@capacitor/app": "^8.0.0" },
+            "devDependencies": { "@capacitor/cli": "^8.0.0" }
           }
           EOF
           cat > capacitor.config.json <<'EOF'
           {
             "appId": "in.mpexam.app",
-            "appName": "MP Exam",
+            "appName": "Pariksha Sarthi",
             "webDir": "www",
-            "android": { "backgroundColor": "#0D2B7E", "allowMixedContent": false },
+            "android": { "backgroundColor": "#111827", "allowMixedContent": false },
             "server": { "androidScheme": "https" }
           }
           EOF
 
       - name: Install Capacitor
-        run: npm install
+        run: npm install && pip install pillow -q
 
       - name: Add Android platform
         run: npx cap add android
 
-      - name: App icons
+      - name: App icons (adaptive + legacy) and splash colour
         run: |
+          set -e
           RES=android/app/src/main/res
-          for d in mdpi hdpi; do for n in ic_launcher ic_launcher_round ic_launcher_foreground; do cp www/icon-72.png $RES/mipmap-$d/$n.png; done; done
-          for n in ic_launcher ic_launcher_round ic_launcher_foreground; do cp www/icon-96.png $RES/mipmap-xhdpi/$n.png; cp www/icon-144.png $RES/mipmap-xxhdpi/$n.png; cp www/icon-192.png $RES/mipmap-xxxhdpi/$n.png; done
+          # legacy / round icons (48dp)
+          for p in "mdpi 72" "hdpi 72" "xhdpi 96" "xxhdpi 144" "xxxhdpi 192"; do set -- $p
+            cp www/icon-$2.png $RES/mipmap-$1/ic_launcher.png; cp www/icon-$2.png $RES/mipmap-$1/ic_launcher_round.png
+          done
+          # adaptive icon foreground (round logo inside the safe zone) + dark background
+          for d in mdpi hdpi xhdpi xxhdpi xxxhdpi; do
+            if [ -f fg-$d.png ]; then cp fg-$d.png $RES/mipmap-$d/ic_launcher_foreground.png; else cp www/icon-192.png $RES/mipmap-$d/ic_launcher_foreground.png; fi
+          done
+          mkdir -p $RES/values
+          printf '<?xml version="1.0" encoding="utf-8"?>\n<resources>\n    <color name="ic_launcher_background">#111827</color>\n</resources>\n' > $RES/values/ic_launcher_background.xml
+          # splash: dark background with the app icon
+          for f in $(find $RES -name 'splash.png'); do python3 - "$f" <<'PY'
+          import sys
+          from PIL import Image
+          p=sys.argv[1]; im=Image.open(p); W,H=im.size
+          bg=Image.new('RGB',(W,H),(17,24,39)); ic=Image.open('www/icon-512.png').convert('RGBA')
+          s=int(min(W,H)*0.42); ic=ic.resize((s,s)); bg.paste(ic,((W-s)//2,(H-s)//2),ic); bg.save(p)
+          PY
+          done
+          grep -rl "MP Exam" android/app/src/main/res/values 2>/dev/null | xargs -r sed -i 's/MP Exam/Pariksha Sarthi/g'
+          echo "SDK levels:"; cat android/variables.gradle
 
       - name: Version + signing config
         env:
@@ -85,6 +120,7 @@ jobs:
           p='android/app/build.gradle'; s=open(p).read()
           s=re.sub(r'versionCode\s+\d+', 'versionCode '+os.environ['VERSION_CODE'], s)
           s=re.sub(r'versionName\s+"[^"]*"', 'versionName "'+os.environ['VERSION_NAME']+'"', s)
+          # Fixed debug key (debug.keystore in repo) -> test APKs update in place, no uninstall needed
           if os.path.exists('debug.keystore'):
               dbg='''    signingConfigs {
                   debug {
@@ -96,6 +132,7 @@ jobs:
               }
           '''
               s=s.replace('android {\n', 'android {\n'+dbg, 1)
+              print("fixed debug key enabled")
           if os.environ.get('KEYSTORE_BASE64'):
               sc='''    signingConfigs {
                   release {
@@ -118,6 +155,9 @@ jobs:
               else:
                   s=s.replace('android {\n', 'android {\n'+sc, 1)
               s=re.sub(r'(buildTypes\s*\{\s*release\s*\{)', r'\1\n            signingConfig signingConfigs.release', s, 1)
+              print("release signing enabled")
+          else:
+              print("No KEYSTORE_BASE64 secret -> only debug APK will be built")
           open(p,'w').write(s)
           PY
           if [ -n "$KEYSTORE_BASE64" ]; then echo "$KEYSTORE_BASE64" | base64 -d > android/app/release.jks; fi
@@ -141,14 +181,14 @@ jobs:
       - name: Upload debug APK
         uses: actions/upload-artifact@v4
         with:
-          name: mp-exam-debug
+          name: pariksha-sarthi-debug
           path: android/app/build/outputs/apk/debug/app-debug.apk
 
       - name: Upload release AAB + APK
         if: ${{ env.HAS_KEY == 'true' }}
         uses: actions/upload-artifact@v4
         with:
-          name: mp-exam-release
+          name: pariksha-sarthi-release
           path: |
             android/app/build/outputs/bundle/release/app-release.aab
             android/app/build/outputs/apk/release/app-release.apk
