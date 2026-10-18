@@ -313,6 +313,14 @@ svg.i{display:block;flex-shrink:0}
 .ca-footer{display:flex;justify-content:space-between;align-items:center;margin-top:4px;gap:8px}
 .ca-src{font-size:11px;color:var(--fg3)}
 .home-ca{margin:0 16px}
+.ca-month-h{font-size:13px;font-weight:700;color:var(--fg2);padding:6px 2px 0}
+.ca-card.open .ca-body{display:block}.ca-card .ca-body{display:none}
+.ca-facts{margin:6px 0 0 18px;padding:0;font-size:calc(13.5px*var(--fs));color:var(--fg);line-height:1.6}
+.ca-facts li{margin:2px 0}
+.ca-row{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.ca-tag.n{background:var(--pl,#E7EEFB);color:var(--primary)}.ca-tag.i{background:#EFE9FB;color:#5B21B6}.ca-tag.m{background:var(--amber-bg);color:var(--amber)}
+.ca-more{font-size:12px;color:var(--fg3)}
+.ca-src{font-size:11px;color:var(--fg3)}
 
 /* REVIEW / BOOKMARK */
 .rv{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:6px;border-left-width:4px}
@@ -557,13 +565,11 @@ svg.i{display:block;flex-shrink:0}
 
 <!-- ===== CURRENT AFFAIRS ===== -->
 <div id="ca" class="screen">
-  <div class="hdr"><div class="hdr-txt"><div class="hdr-sub">मासिक</div><div class="hdr-title">करंट अफेयर्स</div></div></div>
-  <div class="ca-filters">
-    <div class="ca-chip active" onclick="caFilter(this,'all')">सभी</div>
-    <div class="ca-chip" onclick="caFilter(this,'mp')">MP विशेष</div>
-    <div class="ca-chip" onclick="caFilter(this,'national')">राष्ट्रीय</div>
-    <div class="ca-chip" onclick="caFilter(this,'economy')">अर्थव्यवस्था</div>
-    <div class="ca-chip" onclick="caFilter(this,'science')">विज्ञान/IT</div>
+  <div class="hdr"><div class="hdr-txt"><div class="hdr-sub" id="ca-sub">2023 से अब तक</div><div class="hdr-title">करंट अफेयर्स</div></div><button class="hdr-btn" id="ca-test-btn" onclick="startCATest()">Test</button></div>
+  <div class="ca-filters" id="ca-years"></div>
+  <div class="ca-filters" id="ca-months" style="padding-top:0"></div>
+  <div class="ca-filters" id="ca-cats" style="padding-top:0">
+    <div class="ca-chip active" data-v="all">सभी</div><div class="ca-chip" data-v="national">राष्ट्रीय</div><div class="ca-chip" data-v="international">अंतर्राष्ट्रीय</div><div class="ca-chip" data-v="mp">मध्यप्रदेश</div>
   </div>
   <div class="ca-list" id="ca-list"></div>
   <div class="bottom-nav" data-nav="ca"></div>
@@ -636,7 +642,7 @@ const SYLLABUS = {
 
 let QUESTIONS = JSON.parse(document.getElementById('qdata').textContent);
 
-let CA_DATA = JSON.parse(document.getElementById('cadata').textContent);
+
 
 // Subject buckets (same keywords as convert_xlsx.py)
 const BUCKETS = [
@@ -697,7 +703,7 @@ async function loadData(){
   }catch(e){}
   // 2) single-file bank (older builds / web)
   if(!loaded){ try{ const r=await fetch('questions.json',{cache:'no-cache'}); if(r.ok){ const j=await r.json(); if(Array.isArray(j)&&j.length>QUESTIONS.length){ QUESTIONS=j; BANK_INFO={src:'single',files:1}; } } }catch(e){} }
-  try{ const r=await fetch('ca.json',{cache:'no-cache'}); if(r.ok){ const j=await r.json(); if(Array.isArray(j)&&j.length){ CA_DATA=j; renderCA(); renderHomeCA(); } } }catch(e){}
+  await loadCAIndex();
   updateQCount();
 }
 loadData();
@@ -1184,7 +1190,7 @@ function updateTimerDisplay(){
 }
 
 // ===== RESULT =====
-const MODE_LBL={topic:'Topic Test', full:'Full Length Test', daily:'आज का क्विज़', wrong:'गलत प्रश्न दोबारा', bm:'Bookmark Test'};
+const MODE_LBL={topic:'Topic Test', full:'Full Length Test', daily:'आज का क्विज़', wrong:'गलत प्रश्न दोबारा', bm:'Bookmark Test', ca:'करंट अफेयर्स'};
 function pcol(p){ return p>=70?'var(--green)':p>=50?'var(--primary)':'var(--red)'; }
 function barRow(name, c, t){ const p=t?Math.round(c/t*100):0; return `<div class="pr"><div class="pr-top"><span>${name}</span><b style="color:${pcol(p)}">${p}% <span style="color:var(--fg3);font-weight:500">(${c}/${t})</span></b></div><div class="pr-bar"><i style="width:${p}%;background:${pcol(p)}"></i></div></div>`; }
 function finishQuiz(){
@@ -1195,7 +1201,7 @@ function finishQuiz(){
   state.correct=c; state.wrong=w; state.skip=s; state.lastWrong=wrongQ;
   const pct = total?Math.round((c/total)*100):0;
   const net = c - w*state.neg;
-  document.getElementById('r-ctx').textContent = `${exName(state.cur)} • ${state.mode==='pyq'?(setup.paper||'PYQ'):(MODE_LBL[state.mode]||'Test')}`;
+  document.getElementById('r-ctx').textContent = `${exName(state.cur)} • ${state.mode==='pyq'?(setup.paper||'PYQ'):state.mode==='ca'?('करंट अफेयर्स • '+(state.caLabel||'')):(MODE_LBL[state.mode]||'Test')}`;
   document.getElementById('r-score').textContent = c;
   document.getElementById('r-total').textContent = '/'+total;
   document.getElementById('r-pct').textContent = pct+'% अंक';
@@ -1303,32 +1309,76 @@ function resetData(){
   }, {ok:'Delete करें'});
 }
 
-// ===== CURRENT AFFAIRS =====
-let caActive = 'all';
-function renderCA(){
-  const list = document.getElementById('ca-list');
-  const items = caActive==='all' ? CA_DATA : CA_DATA.filter(c=>c.cat===caActive);
-  list.innerHTML = items.map(c=>`
-    <div class="ca-card">
-      <div class="ca-tag" style="${c.tagStyle}">${c.tag}</div>
-      <div class="ca-headline">${c.headline}</div>
-      <div class="ca-body">${c.body}</div>
-      <div class="ca-footer">
-        <span class="ca-src">📌 ${c.src||''}</span>
-        <span class="ca-src">${c.date||''}</span>
-      </div>
-    </div>`).join('');
+
+// ===== CURRENT AFFAIRS (monthly, 3 categories) =====
+const CAT_L={national:['राष्ट्रीय','n'],international:['अंतर्राष्ट्रीय','i'],mp:['मध्यप्रदेश','m']};
+const MON_H=['जनवरी','फ़रवरी','मार्च','अप्रैल','मई','जून','जुलाई','अगस्त','सितंबर','अक्टूबर','नवंबर','दिसंबर'];
+function monLabel(m){ const [y,mm]=m.split('-'); return MON_H[parseInt(mm)-1]+' '+y; }
+let CA_IDX=null, CA_CACHE={}, caSel={year:null, month:null, cat:'all'};
+let CA_DATA=[]; try{ CA_DATA=JSON.parse(document.getElementById('cadata').textContent); }catch(e){}
+async function loadCAIndex(){
+  try{ const r=await fetch('ca-index.json',{cache:'no-cache'}); if(r.ok){ const j=await r.json(); if(j&&j.months&&j.months.length){ CA_IDX=j; } } }catch(e){}
+  if(CA_IDX){ const last=CA_IDX.months[CA_IDX.months.length-1].m; caSel.year=last.slice(0,4); caSel.month=last; }
+  renderHomeCA(); if(document.getElementById('ca').classList.contains('active')) renderCA();
 }
-function renderHomeCA(){
-  const c=CA_DATA[0]; const el=document.getElementById('home-ca'); if(!c||!el) return;
-  el.innerHTML=`<div class="ca-tag" style="${c.tagStyle||''}">${c.tag}</div><div class="ca-headline">${c.headline}</div><div style="font-size:12px;color:var(--fg3);margin-top:6px" class="hi">${c.date||''} • 2 min पढ़ें</div>`;
+async function caMonth(m){
+  if(CA_CACHE[m]) return CA_CACHE[m];
+  try{ const r=await fetch('ca-'+m+'.json',{cache:'force-cache'}); if(r.ok){ const j=await r.json(); CA_CACHE[m]=j.entries||[]; return CA_CACHE[m]; } }catch(e){}
+  return (CA_CACHE[m]=[]);
 }
-function caFilter(el, cat){
-  caActive=cat;
-  document.querySelectorAll('.ca-chip').forEach(c=>c.classList.remove('active'));
-  el.classList.add('active');
+function caYears(){ return CA_IDX? [...new Set(CA_IDX.months.map(x=>x.m.slice(0,4)))].sort().reverse() : []; }
+function caMonthsOf(y){ return CA_IDX? CA_IDX.months.filter(x=>x.m.startsWith(y)).map(x=>x.m).sort().reverse() : []; }
+function renderCAFilters(){
+  const ys=document.getElementById('ca-years'), ms=document.getElementById('ca-months');
+  ys.innerHTML=caYears().map(y=>`<div class="ca-chip ${y===caSel.year?'active':''}" onclick="caPick('year','${y}')">${y}</div>`).join('');
+  ms.innerHTML=caMonthsOf(caSel.year).map(m=>`<div class="ca-chip ${m===caSel.month?'active':''}" onclick="caPick('month','${m}')">${MON_H[parseInt(m.slice(5))-1]}</div>`).join('');
+  document.querySelectorAll('#ca-cats .ca-chip').forEach(c=>{ c.classList.toggle('active',c.dataset.v===caSel.cat); c.onclick=()=>caPick('cat',c.dataset.v); });
+}
+function caPick(k,v){
+  if(k==='year'){ caSel.year=v; caSel.month=caMonthsOf(v)[0]; }
+  else if(k==='month') caSel.month=v; else caSel.cat=v;
+  try{ localStorage.setItem('ps_ca',JSON.stringify(caSel)); }catch(e){}
   renderCA();
 }
+async function renderCA(){
+  const list=document.getElementById('ca-list');
+  if(!CA_IDX){ // old single-file fallback
+    document.getElementById('ca-years').innerHTML=''; document.getElementById('ca-months').innerHTML='';
+    document.querySelectorAll('#ca-cats .ca-chip').forEach(c=>{ c.classList.toggle('active',c.dataset.v===caSel.cat); c.onclick=()=>caPick('cat',c.dataset.v); });
+    list.innerHTML=CA_DATA.filter(c=>caSel.cat==='all'||c.cat===caSel.cat).map(c=>`<div class="ca-card"><div class="ca-tag" style="${c.tagStyle||''}">${c.tag||''}</div><div class="ca-headline">${c.headline}</div><div class="ca-body" style="display:block">${c.body||''}</div><div class="ca-footer"><span class="ca-src">${c.src||''}</span><span class="ca-src">${c.date||''}</span></div></div>`).join('') || '<div class="empty-note">करंट अफेयर्स जल्द जोड़े जाएँगे।</div>';
+    document.getElementById('ca-test-btn').style.display='none'; return;
+  }
+  renderCAFilters();
+  list.innerHTML='<div class="empty-note">लोड हो रहा है…</div>';
+  const es=await caMonth(caSel.month);
+  const f=es.filter(e=>caSel.cat==='all'||e.cat===caSel.cat);
+  const nq=caQs(caSel.month,caSel.cat).length;
+  document.getElementById('ca-sub').textContent=monLabel(caSel.month)+' • '+f.length+' विषय';
+  const tb=document.getElementById('ca-test-btn'); tb.style.display=nq?'':'none'; tb.textContent=`Test (${nq})`;
+  const order={national:0,international:1,mp:2};
+  list.innerHTML=f.length? f.slice().sort((a,b)=>(order[a.cat]-order[b.cat])||(a.date>b.date?-1:1)).map(e=>`
+    <div class="ca-card" onclick="this.classList.toggle('open')">
+      <div class="ca-row"><span class="ca-tag ${CAT_L[e.cat]?CAT_L[e.cat][1]:''}">${CAT_L[e.cat]?CAT_L[e.cat][0]:e.cat}</span><span class="ca-src">${fmtDate(e.date)}</span></div>
+      <div class="ca-headline">${e.title}</div>
+      <div class="ca-body">${(e.body||'').replace(/\n/g,'<br>')}${e.facts&&e.facts.length?`<ul class="ca-facts">${e.facts.map(x=>`<li>${x}</li>`).join('')}</ul>`:''}<div class="ca-footer"><span class="ca-src">📌 ${e.src||''}</span>${e.titleEn?`<span class="ca-src">${e.titleEn}</span>`:''}</div></div>
+      <div class="ca-more">टैप करके पूरा पढ़ें ▾</div>
+    </div>`).join('') : '<div class="empty-note">इस महीने/श्रेणी में अभी कुछ नहीं।</div>';
+}
+function fmtDate(d){ if(!d) return ''; const [y,m,dd]=d.split('-'); return (dd&&dd!=='01'?parseInt(dd)+' ':'')+MON_H[parseInt(m)-1]+' '+y; }
+function caQs(month,cat){ return QUESTIONS.filter(q=>q.m===month && (cat==='all'||q.cat===cat)); }
+function startCATest(){
+  const l=caQs(caSel.month,caSel.cat); if(!l.length){ toast('इस महीने के प्रश्न अभी नहीं'); return; }
+  state.mode='ca'; state.cur=(loadStorage().exam)||'MP'; state.caLabel=monLabel(caSel.month)+(caSel.cat==='all'?'':' • '+CAT_L[caSel.cat][0]);
+  beginQuiz(shuffle(l).slice(0,50), Math.min(50,l.length));
+}
+async function renderHomeCA(){
+  const el=document.getElementById('home-ca'); if(!el) return;
+  if(CA_IDX){ const es=await caMonth(caSel.month); const c=es.find(e=>e.cat==='mp')||es[0]; if(c){ el.innerHTML=`<div class="ca-tag ${CAT_L[c.cat][1]}">${CAT_L[c.cat][0]} • ${monLabel(caSel.month)}</div><div class="ca-headline">${c.title}</div><div style="font-size:12px;color:var(--fg3);margin-top:6px">${es.length} विषय • ${caQs(caSel.month,'all').length} प्रश्न • पढ़ने के लिए टैप करें</div>`; return; } }
+  const c=CA_DATA[0]; if(!c) { el.innerHTML='<div class="ca-headline">करंट अफेयर्स</div><div style="font-size:12px;color:var(--fg3)">जल्द जोड़े जाएँगे</div>'; return; }
+  el.innerHTML=`<div class="ca-tag" style="${c.tagStyle||''}">${c.tag}</div><div class="ca-headline">${c.headline}</div><div style="font-size:12px;color:var(--fg3);margin-top:6px">${c.date||''} • 2 min पढ़ें</div>`;
+}
+try{ const s=JSON.parse(localStorage.getItem('ps_ca')||'null'); if(s&&s.month) caSel=s; }catch(e){}
+
 // Override go(): rebuild topics, keep history for Android back button
 const _go = go; const navStack=[];
 window.go = function(id){
@@ -1338,6 +1388,7 @@ window.go = function(id){
   if(id==='topics') buildTopics();
   if(id==='dashboard') refreshDash();
   if(id==='home') refreshHome();
+  if(id==='ca') renderCA();
   if(id==='bookmarks') renderBm();
   if(id==='progress') refreshProgress();
   window.scrollTo(0,0);
@@ -1379,7 +1430,7 @@ if('serviceWorker' in navigator && location.protocol.startsWith('http') && !(win
 }
 
 // ===== INIT =====
-buildStatic(); renderCA(); renderHomeCA();
+buildStatic(); renderHomeCA();
 setTimeout(()=>{
   const d = loadStorage();
   if(d.name){ go('home'); }
