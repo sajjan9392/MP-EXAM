@@ -55,7 +55,7 @@ jobs:
             if [ ! -f "$f" ]; then echo "::error::$f nahi mila - zip ki ye file bhi upload karo"; exit 1; fi
             cp "$f" www/
           done
-          cp manifest.json sw.js privacy.html ca.json www/ 2>/dev/null || true
+          cp manifest.json sw.js privacy.html ca.json ca-*.json caq-*.json www/ 2>/dev/null || true
           cp icon-*.png maskable-*.png logo*.png www/ 2>/dev/null || true
           echo "Questions in this build:"; python3 -c "import json;print(json.load(open('qindex.json'))['total'])"
           ls -la www
