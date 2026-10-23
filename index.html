@@ -1318,7 +1318,11 @@ let CA_IDX=null, CA_CACHE={}, caSel={year:null, month:null, cat:'all'};
 let CA_DATA=[]; try{ CA_DATA=JSON.parse(document.getElementById('cadata').textContent); }catch(e){}
 async function loadCAIndex(){
   try{ const r=await fetch('ca-index.json',{cache:'no-cache'}); if(r.ok){ const j=await r.json(); if(j&&j.months&&j.months.length){ CA_IDX=j; } } }catch(e){}
-  if(CA_IDX){ const last=CA_IDX.months[CA_IDX.months.length-1].m; caSel.year=last.slice(0,4); caSel.month=last; }
+  if(CA_IDX){
+    try{ const parts=await Promise.all((CA_IDX.qfiles||[]).map(f=>fetch(f,{cache:'no-cache'}).then(r=>r.ok?r.json():[]).catch(()=>[])));
+      const have=new Set(QUESTIONS.map(q=>q.id)); parts.forEach(a=>a.forEach(q=>{ if(!have.has(q.id)) QUESTIONS.push(q); })); }catch(e){}
+    const ms=CA_IDX.months.map(x=>x.m); if(!caSel.month||!ms.includes(caSel.month)){ const last=ms[ms.length-1]; caSel.year=last.slice(0,4); caSel.month=last; }
+  }
   renderHomeCA(); if(document.getElementById('ca').classList.contains('active')) renderCA();
 }
 async function caMonth(m){
