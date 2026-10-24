@@ -1384,13 +1384,14 @@ async function renderCA(){
   document.getElementById('ca-sub').textContent=monLabel(caSel.month)+' • '+f.length+' विषय';
   const tb=document.getElementById('ca-test-btn'); tb.style.display=nq?'':'none'; tb.textContent=`Test (${nq})`;
   const order={national:0,international:1,mp:2};
-  list.innerHTML=f.length? f.slice().sort((a,b)=>(order[a.cat]-order[b.cat])||(a.date>b.date?-1:1)).map(e=>`
+  let lastD=null;
+  list.innerHTML=f.length? f.slice().sort((a,b)=>(a.date<b.date?1:a.date>b.date?-1:0)||(order[a.cat]-order[b.cat])).map(e=>{ const h=(e.date!==lastD)?`<div class="ca-month-h">📅 ${fmtDate(e.date)}</div>`:''; lastD=e.date; return h+`
     <div class="ca-card" onclick="this.classList.toggle('open')">
       <div class="ca-row"><span class="ca-tag ${CAT_L[e.cat]?CAT_L[e.cat][1]:''}">${CAT_L[e.cat]?CAT_L[e.cat][0]:e.cat}</span><span class="ca-src">${fmtDate(e.date)}</span></div>
       <div class="ca-headline">${caTitle(e)}</div>
       <div class="ca-body">${(e.body||'').replace(/\n/g,'<br>')}${e.facts&&e.facts.length?`<ul class="ca-facts">${e.facts.map(x=>`<li>${x}</li>`).join('')}</ul>`:''}<div class="ca-footer"><span class="ca-src">📌 ${e.src||''}</span>${e.titleEn?`<span class="ca-src">${e.titleEn}</span>`:''}</div></div>
       <div class="ca-more">टैप करके पूरा पढ़ें ▾</div>
-    </div>`).join('') : '<div class="empty-note">इस महीने/श्रेणी में अभी कुछ नहीं।</div>';
+    </div>`; }).join('') : '<div class="empty-note">इस महीने/श्रेणी में अभी कुछ नहीं।</div>';
 }
 function fmtDate(d){ if(!d) return ''; const [y,m,dd]=d.split('-'); return (dd&&dd!=='01'?parseInt(dd)+' ':'')+MON_H[parseInt(m)-1]+' '+y; }
 function caQs(month,cat){ return QUESTIONS.filter(q=>q.m===month && (cat==='all'||q.cat===cat)); }
