@@ -56,6 +56,9 @@ jobs:
             cp "$f" www/
           done
           cp manifest.json sw.js privacy.html ca.json ca-*.json caq-*.json www/ 2>/dev/null || true
+          mkdir -p www/img
+          [ -d img ] && cp img/*.webp www/img/ 2>/dev/null || true
+          cp *.webp www/img/ 2>/dev/null || true
           cp icon-*.png maskable-*.png logo*.png www/ 2>/dev/null || true
           echo "Questions in this build:"; python3 -c "import json;print(json.load(open('qindex.json'))['total'])"
           ls -la www
