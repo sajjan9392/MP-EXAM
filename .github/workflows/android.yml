@@ -10,6 +10,8 @@ name: Build Android App
 on:
   push:
     branches: [ main ]
+    paths-ignore:
+      - 'live/**'     # daily CA / question updates reach the app online — no new APK build
   workflow_dispatch:
 
 jobs:
