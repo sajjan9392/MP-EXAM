@@ -1,6 +1,8 @@
 {
- "updated": "2026-10-24",
+ "updated": "2026-10-30",
  "files": {
-  "qpatch.json": "e2022a97cf01"
+  "qpatch.json": "33da5cb85b85",
+  "ca-2026-10.json": "e005d7335c66",
+  "ca-index.json": "1c6a95605a64"
  }
 }
