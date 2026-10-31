@@ -12,6 +12,7 @@ on:
     branches: [ main ]
     paths-ignore:
       - 'live/**'     # daily CA / question updates reach the app online — no new APK build
+      - 'privacy.html'  # policy page only (served by GitHub Pages)
   workflow_dispatch:
 
 jobs:
