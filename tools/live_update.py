@@ -9,7 +9,8 @@ artifact's files downloaded into BANK/).
 
 Writes <repo_dir>/live/{ca-index.json, ca-YYYY-MM.json (only changed months), qpatch.json,
 manifest.json}. qpatch = questions that are new or changed vs the baseline, plus ids that
-disappeared (never PYQ ids starting with P). Explanation-only edits are left for the next APK. Prints a short summary.
+disappeared (never PYQ ids starting with P). Explanation-only edits (exp/expe) go to per-chunk
+live/xp-q-NN.json files listed in live/xmanifest.json (read only by apps with xp support). Prints a short summary.
 """
 import hashlib, json, os, sys, glob
 
@@ -59,8 +60,36 @@ def main(repo, latest):
     man = {'updated': ci_new.get('updated') or '', 'files': files}
     with open(os.path.join(live, 'manifest.json'), 'w', encoding='utf-8') as f:
         json.dump(man, f, ensure_ascii=False, indent=1)
+    # Explanations (exp / expe) changed vs the baseline -> one small file per chunk (xp-q-NN.json),
+    # listed in xmanifest.json. Only apps with "xp" support read xmanifest, so older APKs never
+    # download these files. A chunk file is re-downloaded only when its own content changes.
+    upd_ids = {q['id'] for q in upd}
+    xfiles, nx = {}, 0
+    idx_new = jload(os.path.join(latest, 'qindex.json'), {}) or {}
+    for cf in idx_new.get('files', []):
+        part = {}
+        for q in jload(os.path.join(latest, cf), []) or []:
+            i = q.get('id')
+            if not i or i in upd_ids: continue
+            b = base.get(i)
+            if b is None: continue
+            if (q.get('exp') or '') != (b.get('exp') or '') or (q.get('expe') or '') != (b.get('expe') or ''):
+                e = {'exp': q.get('exp') or ''}
+                if q.get('expe'): e['expe'] = q['expe']
+                part[i] = e
+        name = 'xp-' + cf
+        if part:
+            s = json.dumps(part, ensure_ascii=False, separators=(',', ':'))
+            with open(os.path.join(live, name), 'w', encoding='utf-8') as f: f.write(s)
+            xfiles[name] = h(s); nx += len(part)
+    for f in glob.glob(os.path.join(live, 'xp-*.json')):   # drop stale explanation files
+        if os.path.basename(f) not in xfiles: os.remove(f)
+    with open(os.path.join(live, 'xmanifest.json'), 'w', encoding='utf-8') as f:
+        json.dump({'updated': man['updated'], 'files': xfiles}, f, ensure_ascii=False, indent=1)
     print(json.dumps({'qpatch_upd': len(upd), 'qpatch_del': len(dele), 'ca_months': [x['m'] for x in months],
-                      'bytes': sum(os.path.getsize(os.path.join(live, n)) for n in files)}, ensure_ascii=False))
+                      'bytes': sum(os.path.getsize(os.path.join(live, n)) for n in files),
+                      'xp_questions': nx, 'xp_files': len(xfiles),
+                      'xp_bytes': sum(os.path.getsize(os.path.join(live, n)) for n in xfiles)}, ensure_ascii=False))
 
 if __name__ == '__main__':
     if len(sys.argv) != 3: sys.exit(__doc__)

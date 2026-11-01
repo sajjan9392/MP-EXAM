@@ -1238,7 +1238,7 @@ function renderQ(){
     <div class="exp-box" id="exp-box">
       <div class="exp-title">व्याख्या</div>
       ${NOANS(q)?'<div class="noans">⚠ इस प्रश्न का कोई भी विकल्प सही नहीं है — इसलिए कोई उत्तर सही नहीं दिखाया गया और यह प्रश्न अंकों में नहीं गिना जाएगा।</div>':''}
-      <div class="exp-text">${q.exp ? expH(q.exp) : (NOANS(q)?'':'सही उत्तर: '+LET[q.ans]+') '+q.opts[q.ans])}</div>
+      <div class="exp-text">${qExp(q) ? expH(qExp(q)) : (NOANS(q)?'':'सही उत्तर: '+LET[q.ans]+') '+q.opts[q.ans])}</div>
     </div>`;
   if(state.answered){ showAnswer(q, prev); }
   else if(endMode){
@@ -1377,7 +1377,7 @@ function rvCard(q, i, u, extra){
     <div class="rv-top"><span class="badge b-blue">${qSt(q)}</span>${extra||''}</div>
     <div class="rv-q">${i!=null?(i+1)+'. ':''}${qText(q)}${setup.lang==='both'&&q.qe&&q.qe!==q.q&&!/<svg/.test(q.q)?`<div class="q-en" style="margin-top:2px">${q.qe.replace(/<img[^>]*>/g,'')}</div>`:''}</div>
     ${q.opts.map((o,j)=>`<div class="rv-o ${j===q.ans?'ok':''}${(u!==null&&!sk&&j===u&&!ok&&!na)?'bad':''}">${LET[j]}) ${optText(q,j)}${setup.lang==='both'&&q.optse&&q.optse[j]&&q.optse[j]!==o?` <span style="opacity:.7;font-family:var(--sans)">· ${q.optse[j]}</span>`:''}</div>`).join('')}
-    <div class="rv-e">${na?'⚠ कोई विकल्प सही नहीं — अंकों में नहीं गिना ':u===null?'':(sk?'⏭ छोड़ा':ok?'✅ सही':'❌ गलत')+' '}${q.exp?(/\n/.test(q.exp)?'<br>':'• ')+expH(q.exp):''}</div>
+    <div class="rv-e">${na?'⚠ कोई विकल्प सही नहीं — अंकों में नहीं गिना ':u===null?'':(sk?'⏭ छोड़ा':ok?'✅ सही':'❌ गलत')+' '}${qExp(q)?(/\n/.test(qExp(q))?'<br>':'• ')+expH(qExp(q)):''}</div>
   </div>`;
 }
 function showReview(){
@@ -1442,6 +1442,8 @@ function toggleReveal(){ setup.reveal = setup.reveal==='now'?'end':'now'; saveSe
 function pickLangOnb(v,el){ setup.lang=v; saveSetup(); document.querySelectorAll('#onb-lang .chip').forEach(c=>c.classList.toggle('active',c===el)); }
 
 function expH(t){ return String(t).replace(/\n/g,'<br>'); }
+// English explanation when questions are shown in English (falls back to Hindi)
+function qExp(q){ return (setup.lang==='en' && q.expe) ? q.expe : q.exp; }
 
 
 // ===== CURRENT AFFAIRS (monthly, 3 categories) =====
@@ -1523,7 +1525,7 @@ async function renderCA(){
       <div class="ca-row"><span><span class="ca-tag ${CAT_L[e.cat]?CAT_L[e.cat][1]:''}">${CAT_L[e.cat]?CAT_L[e.cat][0]:e.cat}</span> <span class="ca-tag cls" style="color:${cc};border-color:${cc}">${cl}</span></span></div>
       <div class="ca-headline">${caTitle(e)}</div>
       ${UI_LANG==='en'?'':`<div class="facts">${chips}</div>`}
-      <div class="ca-body">${(e.body||'').replace(/\n/g,'<br>')}${e.facts&&e.facts.length?`<ul class="ca-facts">${e.facts.map(x=>`<li>${x}</li>`).join('')}</ul>`:''}<div class="ca-footer"><span class="ca-src">स्रोत: ${e.src||''}</span></div></div>
+      <div class="ca-body">${(caBody(e)||'').replace(/\n/g,'<br>')}${caFacts(e).length?`<ul class="ca-facts">${caFacts(e).map(x=>`<li>${x}</li>`).join('')}</ul>`:''}<div class="ca-footer"><span class="ca-src">स्रोत: ${e.src||''}</span></div></div>
       <div class="ca-more">पूरा पढ़ें ▾</div>
     </div>`; }).join('')+'</div>' : '<div class="empty-note">इस महीने/श्रेणी में अभी कुछ नहीं।</div>';
 }
@@ -1755,6 +1757,15 @@ async function liveApply(){
     if(!caSel.month || caSel.month<last){ caSel.year=last.slice(0,4); caSel.month=last; }
     changed=true;
   }
+  // 3) explanation updates (xp-q-NN files from xmanifest.json): merge exp/expe by id
+  const xm=await liveGet('xmanifest');
+  if(xm && xm.files){
+    const pos2=new Map(); QUESTIONS.forEach((q,i)=>pos2.set(q.id,i));
+    for(const f of Object.keys(xm.files)){
+      const xp=await liveGet(f.replace(/\.json$/,'')); if(!xp) continue;
+      for(const id in xp){ const i=pos2.get(id); if(i>=0){ const e=xp[id]; if(e.exp) QUESTIONS[i].exp=e.exp; if(e.expe) QUESTIONS[i].expe=e.expe; } }
+    }
+  }
   if(changed){ try{ updateQCount(); renderHomeCA(); if(document.getElementById('ca').classList.contains('active')) renderCA(); }catch(e){} }
   return changed;
 }
@@ -1777,6 +1788,16 @@ async function liveCheck(force){
       await liveSet(key,j); got.push(key);
     }
     await liveSet('manifest',man);
+    // explanation files: separate manifest so older app versions never download them
+    try{
+      const xm=await liveFetch('xmanifest.json');
+      const xhave=(await liveGet('xmanifest'))||{files:{}};
+      for(const [f,hh] of Object.entries(xm.files||{})){
+        if(xhave.files && xhave.files[f]===hh) continue;
+        await liveSet(f.replace(/\.json$/,''), await liveFetch(f)); got.push('xp');
+      }
+      await liveSet('xmanifest',xm);
+    }catch(e){ console.log('live xp',e); }
     try{ localStorage.setItem('ps_live_t',String(Date.now())); }catch(e){}
     if(got.length){
       await liveApply();
@@ -1833,6 +1854,8 @@ const I18N=(function(){
 })();
 function tUI(s){ if(UI_LANG!=='en') return s; const o=I18N.tr(s); return o===null?s:o; }
 function caTitle(e){ return (UI_LANG==='en'&&e.titleEn)?e.titleEn:e.title; }
+function caBody(e){ return (UI_LANG==='en'&&e.bodyEn)?e.bodyEn:e.body; }
+function caFacts(e){ return ((UI_LANG==='en'&&e.factsEn&&e.factsEn.length)?e.factsEn:e.facts)||[]; }
 function setUILang(v){
   try{ localStorage.setItem('ps_uilang',v); }catch(e){}
   const onb=['splash','onboard','name-input'].some(id=>{const e=document.getElementById(id); return e&&e.classList.contains('active');});
