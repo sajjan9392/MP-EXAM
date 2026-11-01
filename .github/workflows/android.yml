@@ -18,6 +18,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write   # to publish the test APK as a direct-download release
     env:
       VERSION_NAME: "1.0.${{ github.run_number }}"
       VERSION_CODE: ${{ github.run_number }}
@@ -198,3 +200,15 @@ jobs:
           path: |
             android/app/build/outputs/bundle/release/app-release.aab
             android/app/build/outputs/apk/release/app-release.apk
+
+      # Direct download link for phones (no zip):
+      # https://github.com/sajjan9392/mp-exam/releases/download/test-latest/pariksha-sarthi-debug.apk
+      - name: Publish test APK (direct download)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cp android/app/build/outputs/apk/debug/app-debug.apk pariksha-sarthi-debug.apk
+          gh release delete test-latest -y --cleanup-tag || true
+          gh release create test-latest pariksha-sarthi-debug.apk --prerelease \
+            --title "Test build ${VERSION_NAME}" \
+            --notes "Testing ke liye debug APK (Play Store wala version nahi). Har naye build par ye file badal jati hai."
