@@ -1,13 +1,13 @@
 {
- "updated": "2026-11-07",
+ "updated": "2026-11-08",
  "files": {
-  "qpatch.json": "ae60b2cc15db",
+  "qpatch.json": "6a065738b76d",
   "ca-2026-01.json": "d41cd621d342",
   "ca-2026-07.json": "f4defae58f4a",
   "ca-2026-08.json": "167676071754",
   "ca-2026-09.json": "3d714cd12f4a",
   "ca-2026-10.json": "4da1a6adde49",
-  "ca-2026-11.json": "b4ef143b7044",
-  "ca-index.json": "cd008ff0fd1c"
+  "ca-2026-11.json": "0ee2ec4f795a",
+  "ca-index.json": "f09f1ebec51a"
  }
 }
