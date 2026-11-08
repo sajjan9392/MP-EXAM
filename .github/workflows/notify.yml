@@ -1,0 +1,29 @@
+# Pariksha Sarthi — push notification (Firebase Cloud Messaging, topic "all")
+# Roz subah ~7:40 IST: agar pichhle 24 ghante me live/ update hua (naya CA / prashn) to sabhi phones par notification.
+# Haath se bhi chala sakte hain: Actions → Send notification → Run workflow (title + message likhkar).
+# Secret chahiye: FCM_SERVICE_ACCOUNT (Firebase → Project settings → Service accounts → private key JSON)
+name: Send notification
+on:
+  schedule:
+    - cron: '11 2 * * *'
+  workflow_dispatch:
+    inputs:
+      title: { description: 'Title (khali = apne-aap)', required: false }
+      body:  { description: 'Message', required: false }
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 100 }
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.12' }
+      - name: Send
+        env:
+          SA: ${{ secrets.FCM_SERVICE_ACCOUNT }}
+          IN_TITLE: ${{ github.event.inputs.title }}
+          IN_BODY: ${{ github.event.inputs.body }}
+        run: |
+          if [ -z "$SA" ]; then echo "::warning::FCM_SERVICE_ACCOUNT secret nahi mila — notification skip"; exit 0; fi
+          pip install -q google-auth requests
+          python3 tools/notify.py

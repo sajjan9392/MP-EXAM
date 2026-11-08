@@ -65,6 +65,7 @@ jobs:
           [ -d img ] && cp img/*.webp www/img/ 2>/dev/null || true
           cp *.webp www/img/ 2>/dev/null || true
           cp icon-*.png maskable-*.png logo*.png www/ 2>/dev/null || true
+          mkdir -p www/fb && cp fb/*.js www/fb/   # Firebase JS SDK (leader board) — loaded only when needed
           echo "Questions in this build:"; python3 -c "import json;print(json.load(open('qindex.json'))['total'])"
           ls -la www
 
@@ -73,7 +74,7 @@ jobs:
           cat > package.json <<'EOF'
           {
             "name": "pariksha-sarthi", "version": "2.0.0", "private": true,
-            "dependencies": { "@capacitor/android": "^8.0.0", "@capacitor/core": "^8.0.0", "@capacitor/app": "^8.0.0" },
+            "dependencies": { "@capacitor/android": "^8.0.0", "@capacitor/core": "^8.0.0", "@capacitor/app": "^8.0.0", "@capacitor-firebase/messaging": "8.5.2" },
             "devDependencies": { "@capacitor/cli": "^8.0.0" }
           }
           EOF
@@ -92,6 +93,14 @@ jobs:
 
       - name: Add Android platform
         run: npx cap add android
+
+      - name: Firebase (push notifications) config
+        run: |
+          set -e
+          cp google-services.json android/app/google-services.json
+          M=android/app/src/main/AndroidManifest.xml
+          grep -q POST_NOTIFICATIONS $M || sed -i 's#<application#<uses-permission android:name="android.permission.POST_NOTIFICATIONS" />\n    <application#' $M
+          grep -n "google-services" android/app/build.gradle android/build.gradle || true
 
       - name: App icons (adaptive + legacy) and splash colour
         run: |
