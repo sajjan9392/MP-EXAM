@@ -739,6 +739,14 @@ const SYLLABUS = {
 };
 
 let QUESTIONS = JSON.parse(document.getElementById('qdata').textContent);
+// Cancelled PYQ questions (q.cancelled): kept out of every test pool; shown only at the end of their own old paper.
+let CANCELQ=[];
+function splitCancelled(){
+  const c=QUESTIONS.filter(q=>q&&q.cancelled);
+  if(c.length){ const ids=new Set(c.map(q=>q.id)); CANCELQ=CANCELQ.filter(q=>!ids.has(q.id)).concat(c); QUESTIONS=QUESTIONS.filter(q=>!(q&&q.cancelled)); }
+  if(CANCELQ.length){ const live=new Set(QUESTIONS.map(q=>q.id)); CANCELQ=CANCELQ.filter(q=>!live.has(q.id)); }
+  QBYID=null;
+}
 
 
 
@@ -801,6 +809,7 @@ async function loadData(){
   }catch(e){}
   // 2) single-file bank (older builds / web)
   if(!loaded){ try{ const r=await fetch('questions.json',{cache:'no-cache'}); if(r.ok){ const j=await r.json(); if(Array.isArray(j)&&j.length>QUESTIONS.length){ QUESTIONS=j; BANK_INFO={src:'single',files:1}; } } }catch(e){} }
+  splitCancelled();
   await loadCAIndex();
   updateQCount();
 }
@@ -823,7 +832,7 @@ function yestS(){ return new Date(Date.now()-86400000).toDateString(); }
 function streakNow(d){ return (d.actDate===todayS()||d.actDate===yestS()) ? (d.streak||0) : 0; }
 function markActive(d){ const t=todayS(); if(d.actDate===t) return; d.streak = d.actDate===yestS() ? (d.streak||0)+1 : 1; d.actDate=t; }
 function qid(q){ if(q.id) return q.id; let h=0; const s=q.q||''; for(let i=0;i<s.length;i++){ h=(h*31+s.charCodeAt(i))|0; } return 'h'+(h>>>0).toString(36); }
-function qById(id){ if(!QBYID){ QBYID=new Map(); QUESTIONS.forEach(q=>QBYID.set(qid(q),q)); } return QBYID.get(id); }
+function qById(id){ if(!QBYID){ QBYID=new Map(); QUESTIONS.forEach(q=>QBYID.set(qid(q),q)); CANCELQ.forEach(q=>QBYID.set(qid(q),q)); } return QBYID.get(id); }
 function fmt(n){ return (n||0).toLocaleString('en-IN'); }
 
 // ===== SCREENS =====
@@ -1062,12 +1071,14 @@ function paperOf(q){ return q.paper || (q.src==='MPPSC/MPSFS PYQ' && q.year ? 'M
 function examsOf(q){ return q.exams || (q.src==='MPPSC/MPSFS PYQ' ? ['MPPSC','MPSFS'] : []); }
 function pyqPapers(exam){
   const m={};
-  QUESTIONS.forEach(q=>{ const p=paperOf(q); if(!p || !examsOf(q).includes(exam)) return; (m[p]=m[p]||{name:p,n:0,y:q.year||0}).n++; });
+  QUESTIONS.concat(CANCELQ).forEach(q=>{ const p=paperOf(q); if(!p || !examsOf(q).includes(exam)) return; (m[p]=m[p]||{name:p,n:0,y:q.year||0}).n++; });
   return Object.values(m).sort((a,b)=>(b.y-a.y)||a.name.localeCompare(b.name));
 }
 function paperQs(name){
   const l=QUESTIONS.filter(q=>paperOf(q)===name);
-  return l.some(q=>q.pno) ? l.slice().sort((a,b)=>(a.pno||0)-(b.pno||0)) : l;  // original paper order
+  const s=l.some(q=>q.pno) ? l.slice().sort((a,b)=>(a.pno||0)-(b.pno||0)) : l;  // original paper order
+  const c=CANCELQ.filter(q=>paperOf(q)===name).sort((a,b)=>(a.pno||0)-(b.pno||0));  // cancelled ones always last
+  return c.length ? s.concat(c) : s;
 }
 function initYearChips(){
   const box=document.getElementById('chip-year'); const ps=pyqPapers(state.cur);
@@ -1226,7 +1237,7 @@ function renderQ(){
   state.selOpt = (endMode && prev>=0) ? prev : -1; state.answered = !endMode && prev>=0;
   const dl=diffLbl(q); const pp=paperOf(q);
   document.getElementById('quiz-body').innerHTML = `
-    <div class="q-tags"><span class="badge b-blue">${qSt(q)}</span><span class="badge ${dl[1]}">${dl[0]}</span>${(pp||q.year)?`<span class="badge b-amber">${pp||('PYQ '+q.year)}</span>`:''}${q.ai?`<span class="badge b-grey">AI</span>`:''}</div>
+    <div class="q-tags"><span class="badge b-blue">${qSt(q)}</span><span class="badge ${dl[1]}">${dl[0]}</span>${(pp||q.year)?`<span class="badge b-amber">${pp||('PYQ '+q.year)}</span>`:''}${q.cancelled?`<span class="badge b-red">❌ निरस्त (Cancelled)</span>`:''}${q.ai?`<span class="badge b-grey">AI</span>`:''}</div>
     <div class="q-text">${qText(q)}</div>
     ${setup.lang==='both'&&q.qe&&q.qe!==q.q&&!/<svg/.test(q.q)?`<div class="q-en">${q.qe.replace(/<img[^>]*>/g,'')}</div>`:''}
     <div class="opts">${q.opts.map((o,i)=>`
@@ -1743,7 +1754,8 @@ async function liveApply(){
     const pos=new Map(); QUESTIONS.forEach((q,i)=>pos.set(q.id,i));
     (qp.upd||[]).forEach(q=>{ if(!q||!q.id) return; const i=pos.get(q.id); if(i>=0) QUESTIONS[i]=q; else { pos.set(q.id,QUESTIONS.length); QUESTIONS.push(q); } });
     const del=new Set((qp.del||[]).filter(id=>!/^P/.test(id)));
-    if(del.size) QUESTIONS=QUESTIONS.filter(q=>!del.has(q.id));
+    if(del.size){ QUESTIONS=QUESTIONS.filter(q=>!del.has(q.id)); CANCELQ=CANCELQ.filter(q=>!del.has(q.id)); }
+    splitCancelled();
     changed=true;
   }
   // 2) current affairs index + month files
