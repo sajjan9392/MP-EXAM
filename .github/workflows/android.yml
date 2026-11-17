@@ -60,7 +60,7 @@ jobs:
             if [ ! -f "$f" ]; then echo "::error::$f nahi mila - zip ki ye file bhi upload karo"; exit 1; fi
             cp "$f" www/
           done
-          cp manifest.json sw.js privacy.html ca.json ca-*.json caq-*.json www/ 2>/dev/null || true
+          cp manifest.json sw.js privacy.html ca.json ca-*.json caq-*.json examinfo.json www/ 2>/dev/null || true
           mkdir -p www/img
           [ -d img ] && cp img/*.webp www/img/ 2>/dev/null || true
           cp *.webp www/img/ 2>/dev/null || true
@@ -101,6 +101,45 @@ jobs:
           M=android/app/src/main/AndroidManifest.xml
           grep -q POST_NOTIFICATIONS $M || sed -i 's#<application#<uses-permission android:name="android.permission.POST_NOTIFICATIONS" />\n    <application#' $M
           grep -n "google-services" android/app/build.gradle android/build.gradle || true
+
+      - name: Screenshot block plugin (FLAG_SECURE on test screens)
+        run: |
+          set -e
+          D=$(dirname $(find android/app/src/main/java -name MainActivity.java | head -1))
+          PKG=$(grep -m1 '^package' $D/MainActivity.java | sed 's/package \(.*\);/\1/')
+          cat > $D/SecurePlugin.java <<EOF
+          package $PKG;
+          import android.view.WindowManager;
+          import com.getcapacitor.Plugin;
+          import com.getcapacitor.PluginCall;
+          import com.getcapacitor.PluginMethod;
+          import com.getcapacitor.annotation.CapacitorPlugin;
+          @CapacitorPlugin(name = "Secure")
+          public class SecurePlugin extends Plugin {
+              @PluginMethod
+              public void set(PluginCall call) {
+                  final boolean on = Boolean.TRUE.equals(call.getBoolean("on", false));
+                  getActivity().runOnUiThread(() -> {
+                      if (on) getActivity().getWindow().addFlags(WindowManager.LayoutParams.FLAG_SECURE);
+                      else getActivity().getWindow().clearFlags(WindowManager.LayoutParams.FLAG_SECURE);
+                      call.resolve();
+                  });
+              }
+          }
+          EOF
+          cat > $D/MainActivity.java <<EOF
+          package $PKG;
+          import android.os.Bundle;
+          import com.getcapacitor.BridgeActivity;
+          public class MainActivity extends BridgeActivity {
+              @Override
+              public void onCreate(Bundle savedInstanceState) {
+                  registerPlugin(SecurePlugin.class);
+                  super.onCreate(savedInstanceState);
+              }
+          }
+          EOF
+          cat $D/MainActivity.java
 
       - name: App icons (adaptive + legacy) and splash colour
         run: |
