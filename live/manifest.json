@@ -1,6 +1,8 @@
 {
- "updated": "2026-11-16",
+ "updated": "2026-11-17",
  "files": {
-  "qpatch.json": "e2022a97cf01"
+  "qpatch.json": "f2171f783c32",
+  "ca-2026-11.json": "6bd3983fe472",
+  "ca-index.json": "a4835a418015"
  }
 }
