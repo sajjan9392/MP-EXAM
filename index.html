@@ -1142,12 +1142,34 @@ function basePool(){
 }
 function updateSetupNote(){
   const el=document.getElementById('setup-note');
-  if(state.mode==='pyq'){ const n=paperQs(setup.paper).length; el.textContent= n? `${setup.paper} • ${n} प्रश्न • ${Math.round(n*PYQ_MIN_PER_Q)} मिनट • मूल क्रम में` : ''; return; }
+  if(state.mode==='pyq'){ const n=paperQs(setup.paper).length; el.textContent= n? `${paperLabel(setup.paper)} • ${n} प्रश्न • ${Math.round(n*PYQ_MIN_PER_Q)} मिनट • मूल क्रम में` : ''; return; }
   const n=basePool().filter(diffOk).length;
   if(state.mode==='full'){ const sp=EXAM_SPEC[state.cur]||{q:100,min:120}; el.textContent=`${Math.min(sp.q,n)} प्रश्न • ${sp.min} मिनट • इस चयन में ${n} प्रश्न उपलब्ध`; return; }
   el.textContent = `${setup.count} प्रश्न • ${setup.count} मिनट • इस चयन में ${n} प्रश्न उपलब्ध`;
 }
 // ===== PYQ papers: each paper = exam + year (+ shift), shown only under the exams it belongs to =====
+const PAPER_EN_RULES=[
+ ['सहायक जिला लोक अभियोजन अधिकारी परीक्षा','Assistant District Public Prosecution Officer Exam'],['विधि प्रश्नपत्र','Law Paper'],
+ ['आयुष विभाग महिला स्वास्थ्य कार्यकर्ता परीक्षा','AYUSH Dept. Female Health Worker Exam'],['आयुष विभाग भर्ती परीक्षा','AYUSH Dept. Recruitment Exam'],
+ ['आयुर्वेद','Ayurveda'],['यूनानी','Unani'],['होम्योपैथी','Homeopathy'],
+ ['ग्रामीण कृषि विस्तार अधिकारी','Rural Agriculture Extension Officer'],['वरिष्ठ कृषि विकास अधिकारी','Senior Agriculture Development Officer'],
+ ['जेल विभाग भर्ती परीक्षा','Jail Dept. Recruitment Exam'],['दुग्ध संघ','Dugdh Sangh'],['पुलिस आरक्षक भर्ती परीक्षा','Police Constable Recruitment Exam'],
+ ['म.प्र. पर्यटन विभाग भर्ती परीक्षा','MP Tourism Dept. Recruitment Exam'],['संयुक्त सहायक ग्रेड-3 परीक्षा','Combined Assistant Grade-3 Exam'],
+ ['लैब टेक्नीशियन','Lab Technician'],['फार्मासिस्ट','Pharmacist'],['एवं अन्य','& others'],
+ ['सहायक प्रोग्रामर','Assistant Programmer'],['डाटा एंट्री ऑपरेटर','Data Entry Operator'],['कंप्यूटर ऑपरेटर','Computer Operator'],
+ ['सूबेदार एवं उप-निरीक्षक भर्ती परीक्षा','Subedar & Sub-Inspector Recruitment Exam'],['होमगार्ड प्लाटून कमांडर भर्ती परीक्षा','Home Guard Platoon Commander Recruitment Exam'],
+ ['औषधि निरीक्षक (Drug Inspector) परीक्षा','Drug Inspector Exam'],['औषधि निरीक्षक','Drug Inspector'],
+ ['सूबेदार/ASI (स्टेनो)','Subedar/ASI (Steno)'],['सूबेदार','Subedar'],['उप-निरीक्षक','Sub-Inspector'],['उप निरीक्षक','Sub-Inspector'],
+ ['उप यंत्री','Sub Engineer'],['मैकेनिकल','Mechanical'],['सिविल','Civil'],['विद्युत','Electrical'],
+ ['पटवारी','Patwari'],['प्रारंभिक','Prelims'],['मुख्य','Mains'],['उप-समूह','Sub-group'],['समूह-','Group-'],['समूह','Group'],
+ ['भर्ती परीक्षा','Recruitment Exam'],['परीक्षा','Exam'],['प्रश्नपत्र','Paper'],['द्वितीय पाली','Second Shift'],['प्रथम पाली','First Shift'],
+ ['पाली','Shift'],['शिफ्ट','Shift'],[' व ',' & '],[' एवं ',' & '],
+ ['जनवरी','January'],['फरवरी','February'],['फ़रवरी','February'],['मार्च','March'],['अप्रैल','April'],['मई','May'],['जून','June'],
+ ['जुलाई','July'],['अगस्त','August'],['सितंबर','September'],['अक्टूबर','October'],['नवंबर','November'],['दिसंबर','December']
+];
+function paperEn(n){ if(!n) return n; let s=n; for(const [h,e] of PAPER_EN_RULES) s=s.split(h).join(e); return s.replace(/\s+/g,' ').trim(); }
+let PAPER_EN_Q=null;
+function paperLabel(n){ if(!n || UI_LANG!=='en') return n; if(!PAPER_EN_Q){ PAPER_EN_Q={}; try{ QUESTIONS.concat(CANCELQ).forEach(q=>{ if(q.paperEn){ const p=paperOf(q); if(p) PAPER_EN_Q[p]=q.paperEn; } }); }catch(e){} } return PAPER_EN_Q[n]||paperEn(n); }
 function paperOf(q){ return q.paper || (q.src==='MPPSC/MPSFS PYQ' && q.year ? 'MPPSC प्रारंभिक '+q.year : null); }
 function examsOf(q){ return q.exams || (q.src==='MPPSC/MPSFS PYQ' ? ['MPPSC','MPSFS'] : []); }
 function pyqPapers(exam){
@@ -1166,7 +1188,7 @@ function initYearChips(){
   if(!ps.length){ setup.paper=null; box.innerHTML='<div class="setup-note" style="padding:0">⏳ In progress — इस exam के पुराने प्रश्नपत्र अभी जोड़े जा रहे हैं।</div>'; return; }
   if(!setup.paper || !ps.some(x=>x.name===setup.paper)) setup.paper=ps[0].name;
   box.style.flexDirection='column';
-  box.innerHTML=ps.map(x=>`<div class="chip ${x.name===setup.paper?'active':''}" data-v="${x.name}" style="width:100%;box-sizing:border-box;display:flex;justify-content:space-between;gap:10px"><span>${x.name}</span><span style="font-weight:400;opacity:.8">${x.n} प्रश्न</span></div>`).join('');
+  box.innerHTML=ps.map(x=>`<div class="chip ${x.name===setup.paper?'active':''}" data-v="${x.name}" style="width:100%;box-sizing:border-box;display:flex;justify-content:space-between;gap:10px"><span class="no-tr">${paperLabel(x.name)}</span><span style="font-weight:400;opacity:.8">${x.n} प्रश्न</span></div>`).join('');
   box.querySelectorAll('.chip').forEach(c=>{ c.onclick=()=>{ setup.paper=c.dataset.v; box.querySelectorAll('.chip').forEach(x=>x.classList.remove('active')); c.classList.add('active'); updateSetupNote(); }; });
 }
 function openSetup(mode, title){
@@ -1417,7 +1439,7 @@ function finishQuiz(){
   state.correct=c; state.wrong=w; state.skip=s; state.lastWrong=wrongQ;
   const pct = total?Math.round((c/total)*100):0;
   const net = c - w*state.neg;
-  document.getElementById('r-ctx').textContent = `${EXAM_MODES.includes(state.mode)?exName(state.cur)+' • ':''}${state.mode==='pyq'?(setup.paper||'PYQ'):state.mode==='ca'?('करंट अफेयर्स • '+(state.caLabel||'')):(MODE_LBL[state.mode]||'Test')}`;
+  document.getElementById('r-ctx').textContent = `${EXAM_MODES.includes(state.mode)?exName(state.cur)+' • ':''}${state.mode==='pyq'?(paperLabel(setup.paper)||'PYQ'):state.mode==='ca'?('करंट अफेयर्स • '+(state.caLabel||'')):(MODE_LBL[state.mode]||'Test')}`;
   document.getElementById('r-score').textContent = c;
   document.getElementById('r-total').textContent = '/'+total;
   document.getElementById('r-pct').textContent = pct+'% अंक';
