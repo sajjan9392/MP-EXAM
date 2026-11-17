@@ -2222,7 +2222,8 @@ async function openExamInfoFor(k){
   if(m.length===1) openEI(m[0].id); else { eiFilter=k; go('exams'); }
 }
 async function openEI(id){
-  const L=await loadEInfo(); const e=L.find(x=>x.id===id); if(!e) return;
+  const L=await loadEInfo(); const e0=L.find(x=>x.id===id); if(!e0) return;
+  const e=(UI_LANG==='en'&&e0.en)?Object.assign({},e0,e0.en,{name_en:e0.en.name||e0.name_en}):e0;  // English version of the notification
   document.getElementById('ei-title').textContent=eiTitle(e);
   document.getElementById('ei-sub').textContent=Lx('परीक्षा जानकारी','Exam INFO')+(e.date?' • '+e.date:'');
   const row=(k,v)=>v?`<div class="ei-row"><span>${k}</span><div>${escH(v)}</div></div>`:'';
