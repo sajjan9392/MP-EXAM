@@ -8,7 +8,7 @@ artifact's files downloaded into BANK/).
     python3 tools/live_update.py <repo_dir> <latest_dir>
 
 Writes <repo_dir>/live/{ca-index.json, ca-YYYY-MM.json (only changed months), qpatch.json,
-manifest.json}. qpatch = questions that are new or changed vs the baseline, plus ids that
+manifest.json, img/*.webp (figures the APK does not bundle)}. qpatch = questions that are new or changed vs the baseline, plus ids that
 disappeared (never PYQ ids starting with P). Explanation-only edits (exp/expe) go to per-chunk
 live/xp-q-NN.json files listed in live/xmanifest.json (read only by apps with xp support). Prints a short summary.
 """
@@ -58,6 +58,25 @@ def main(repo, latest):
     if months: put('ca-index.json', {'updated': ci_new.get('updated'), 'months': months})
     elif os.path.exists(os.path.join(live, 'ca-index.json')): os.remove(os.path.join(live, 'ca-index.json'))
     man = {'updated': ci_new.get('updated') or '', 'files': files}
+    # figures of new questions: every <latest>/img/*.webp that the APK does not bundle (repo img/ or repo root)
+    # is copied to live/img/ and listed in manifest "imgs"; the app downloads and keeps them for offline use.
+    import shutil
+    limg = os.path.join(live, 'img'); imgs = []
+    for f in sorted(glob.glob(os.path.join(latest, 'img', '*.webp'))):
+        n = os.path.basename(f)
+        if os.path.exists(os.path.join(repo, 'img', n)) or os.path.exists(os.path.join(repo, n)): continue
+        os.makedirs(limg, exist_ok=True)
+        if not os.path.exists(os.path.join(limg, n)) or open(f, 'rb').read() != open(os.path.join(limg, n), 'rb').read():
+            shutil.copyfile(f, os.path.join(limg, n))
+        imgs.append(n)
+    for f in glob.glob(os.path.join(limg, '*.webp')):      # bundled since the last APK, or a re-run without that figure: keep only what is still needed
+        n = os.path.basename(f)
+        if os.path.exists(os.path.join(repo, 'img', n)) or os.path.exists(os.path.join(repo, n)): os.remove(f)
+        elif n not in imgs: imgs.append(n)
+    if imgs: man['imgs'] = sorted(imgs)
+    # papers hidden in the app for now (live/hide.json = list of paper-name fragments; edit that file to hide / bring back a paper)
+    hide = jload(os.path.join(live, 'hide.json'), None)
+    if isinstance(hide, list): man['hide'] = hide
     with open(os.path.join(live, 'manifest.json'), 'w', encoding='utf-8') as f:
         json.dump(man, f, ensure_ascii=False, indent=1)
     # Explanations (exp / expe) changed vs the baseline -> one small file per chunk (xp-q-NN.json),

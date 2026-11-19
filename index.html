@@ -501,6 +501,14 @@ svg.i{display:block;flex-shrink:0}
 .ax-row.on{background:color-mix(in srgb,var(--primary) 8%,var(--bg2))}
 .ax-empty{margin:30px 16px;text-align:center;color:var(--fg3);font-size:14px}
 #xp-grid{padding-bottom:20px}
+
+/* ---- report a mistake ---- */
+.rp-types{display:flex;flex-wrap:wrap;gap:8px;margin:4px 0 12px}
+.rp-chip{padding:8px 12px;border-radius:12px;border:1.5px solid var(--border);background:var(--bg2);color:var(--fg2);font-size:13px;font-weight:600;cursor:pointer}
+.rp-chip.on{background:var(--solid);color:var(--solid-fg);border-color:var(--solid)}
+.rp-note{width:100%;box-sizing:border-box;border:1.5px solid var(--border);border-radius:12px;background:var(--bg2);color:var(--fg);font:inherit;font-size:14px;padding:10px;margin-bottom:12px;resize:none}
+.rp-x{margin-left:8px}
+#rp-sheet{z-index:61}
 </style>
 </head>
 <body>
@@ -655,6 +663,7 @@ svg.i{display:block;flex-shrink:0}
     <div class="qrow">
       <button class="sq-btn" onclick="confirmQuit()" aria-label="टेस्ट छोड़ें"><svg class="i" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
       <div class="q-counter" id="q-num">प्रश्न 1 <span>/ 10</span></div>
+      <button class="sq-btn" id="rp-btn" onclick="reportOpen()" aria-label="गलती बताएँ" title="गलती बताएँ"><svg class="i" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 21V4M5 4h11l-2 4 2 4H5"/></svg></button>
       <button class="sq-btn" id="bm-btn" onclick="toggleBm()" aria-label="Bookmark"></button>
       <div class="timer" id="timer"><svg class="i" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#60A5FA" stroke-width="2.4" stroke-linecap="round"><path d="M12 21a8 8 0 1 0 0-16 8 8 0 0 0 0 16zM12 9v4l2 2M9 2h6"/></svg><span id="timer-t">20:00</span></div>
     </div>
@@ -804,6 +813,12 @@ svg.i{display:block;flex-shrink:0}
 </div>
 
 <button class="ca-top" id="ca-top" hidden onclick="window.scrollTo({top:0,behavior:'smooth'})" aria-label="ऊपर जाएँ">↑</button>
+<div class="guide" id="rp-sheet" hidden><div class="guide-card">
+  <div class="guide-t">प्रश्न में गलती बताएँ</div>
+  <div class="rp-types no-tr" id="rp-types"></div>
+  <textarea id="rp-note" class="rp-note" maxlength="200" rows="3" placeholder="सही उत्तर / गलती क्या है? (वैकल्पिक)"></textarea>
+  <div style="display:flex;gap:10px"><button class="btn btn-ghost" style="flex:1" onclick="reportClose()">रद्द करें</button><button class="btn btn-dark" style="flex:1" onclick="reportSend()">भेजें</button></div>
+</div></div>
 <div class="guide" id="guide" hidden><div class="guide-card"><div class="guide-t" id="guide-t"></div><div class="guide-s" id="guide-s"></div><button class="btn btn-dark" onclick="guideOk()">ठीक है, समझ गया</button></div></div>
 
 <!-- ===== DIALOG / TOAST ===== -->
@@ -1525,13 +1540,13 @@ function rvCard(q, i, u, extra){
   </div>`;
 }
 function showReview(){
-  document.getElementById('review-body').innerHTML = state.qList.map((q,i)=>rvCard(q,i,state.answers[i], `<button class="bm-x" onclick="toggleBm('${qid(q)}')">☆ सेव</button>`)).join('');
+  document.getElementById('review-body').innerHTML = state.qList.map((q,i)=>rvCard(q,i,state.answers[i], `<button class="bm-x" onclick="toggleBm('${qid(q)}')">☆ सेव</button><button class="bm-x rp-x" onclick="reportOpen('${qid(q)}')">⚑ गलती बताएँ</button>`)).join('');
   go('review');
 }
 function renderBm(){
   const d=loadStorage(); const l=(d.bm||[]).map(qById).filter(Boolean).reverse();
   document.getElementById('bm-sub').textContent = fmt(l.length)+' प्रश्न';
-  document.getElementById('bm-body').innerHTML = l.length ? l.map(q=>rvCard(q,null,null,`<button class="bm-x" onclick="toggleBm('${qid(q)}')">✕ हटाएँ</button>`)).join('') : '<div class="empty-note">अभी कोई Bookmark नहीं।<br>Test के दौरान ऊपर ☆ दबाकर ज़रूरी प्रश्न यहाँ सेव करें।</div>';
+  document.getElementById('bm-body').innerHTML = l.length ? l.map(q=>rvCard(q,null,null,`<button class="bm-x" onclick="toggleBm('${qid(q)}')">✕ हटाएँ</button><button class="bm-x rp-x" onclick="reportOpen('${qid(q)}')">⚑ गलती बताएँ</button>`)).join('') : '<div class="empty-note">अभी कोई Bookmark नहीं।<br>Test के दौरान ऊपर ☆ दबाकर ज़रूरी प्रश्न यहाँ सेव करें।</div>';
 }
 
 // ===== PROGRESS / PROFILE =====
@@ -1557,6 +1572,7 @@ function refreshDash(){
     ['Bookmark किए प्रश्न', fmt((d.bm||[]).length), '#D97706', 'M6 3h12v18l-6-4-6 4z', "go('bookmarks')"],
     ['गलत प्रश्न (दोबारा करें)', fmt((d.wrong||[]).length), '#DC2626', 'M3 12a9 9 0 1 0 3-6.7L3 8M3 3v5h5', 'startWrong()'],
     ['कमज़ोर सबटॉपिक', fmt(weakN), '#B42318', 'M12 3 2 21h20zM12 10v5M12 18v.5', "go('progress')"],
+    ['रोज़ का रिमाइंडर', loadStorage().remOff?'बंद':'शाम 7 बजे', '#EA580C', 'M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9M10.3 21a1.9 1.9 0 0 0 3.4 0', 'remToggle()'],
     ['मेरी परीक्षाएँ', myExamsLbl(), '#0E7490', 'M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5zM4 20.5A2.5 2.5 0 0 0 6.5 23H20v-5', 'openExamPick(false)'],
     ['App की भाषा', UI_LANG==='en'?'<span class="no-tr">English</span>':'<span class="no-tr">हिंदी</span>', '#2563EB', 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18', 'toggleUILang()'],
     ['सही उत्तर कब दिखें', setup.reveal==='now'?'हर प्रश्न के बाद':'टेस्ट के बाद', '#7C3AED', 'M9 11l3 3L22 4M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11', 'toggleReveal()'],
@@ -2334,7 +2350,7 @@ buildStatic(); try{ arrangeGrid(); }catch(e){}
 
 // ===================== 19 Nov 2026: exams grouped by agency -> field =====================
 // ESB's own structure: Group-1..5 (with sub-groups) + exams held by name. Old paper-wise keys are folded into these.
-const EX_ALIAS={'Group 2':'RAEO','Patwari':'Group 2 SG4','Lab Technician':'Sub Engineer','Computer Operator':'Assistant Grade 3','Ayush':'Group 5','Dairy Federation':'Dept','MP Tourism':'Dept','Drug Inspector':'Dept'};
+const EX_ALIAS={'Group 1 SG3':'Group 1','Group 4':'Assistant Grade 3','Group 2':'RAEO','Patwari':'Group 2 SG4','Lab Technician':'Sub Engineer','Computer Operator':'Assistant Grade 3','Ayush':'Group 5','Dairy Federation':'Dept','MP Tourism':'Dept','Drug Inspector':'Dept'};
 const EX_DEF={
   'Group 1':{n:'समूह-1',en:'Group-1',s:'उप-समूह 1, 2, 3 • अधिकारी स्तर के पद',se:'Sub-groups 1, 2, 3 • officer-level posts',al:'group 1 samuh'},
   'RAEO':{n:'समूह-2 उप-समूह 1',en:'Group-2 Sub-group 1',s:'ग्रामीण कृषि / उद्यान विस्तार अधिकारी',se:'Rural agriculture / horticulture extension officer',al:'raeo कृषि krishi group 2'},
@@ -2428,6 +2444,89 @@ const _renderEIL=renderExamInfoList; renderExamInfoList=async function(){
 GUIDES.allexams=[['सभी परीक्षाएँ','All exams'],['परीक्षाएँ एजेंसी (MPPSC / ESB) और क्षेत्र के अनुसार बँटी हैं। नाम से खोजें, दबाकर टेस्ट दें। "+ जोड़ें" से परीक्षा Home पर "मेरी परीक्षाएँ" में आ जाएगी।','Exams are grouped by agency (MPPSC / ESB) and field. Search by name, tap to take a test. "+ Add" puts an exam under "My exams" on Home.']];
 Object.assign(UI_EN,{"सभी परीक्षाएँ":"All exams","एजेंसी व क्षेत्र के अनुसार":"By agency and field","परीक्षा खोजें…":"Search exam…"});
 try{ arrangeGrid(); }catch(e){}
+
+
+// ===================== 19 Nov 2026 (2): report a mistake • figures via live update • hidden papers • daily reminder =====================
+// ---- 1. report a mistake (queued on the phone, sent to Firestore "reports" when online) ----
+const RP_TYPES=[['ans','उत्तर गलत है','Wrong answer'],['q','प्रश्न / विकल्प में गलती','Error in question / options'],['exp','व्याख्या गलत है','Wrong explanation'],['img','चित्र नहीं दिख रहा','Figure not showing'],['other','अन्य','Other']];
+var RP_Q=null, RP_T='ans';
+function rpLoad(){ try{ return JSON.parse(localStorage.getItem('ps_rep')||'{"q":[],"done":[]}'); }catch(e){ return {q:[],done:[]}; } }
+function rpSave(o){ try{ localStorage.setItem('ps_rep',JSON.stringify(o)); }catch(e){} }
+function rpChips(){ document.getElementById('rp-types').innerHTML=RP_TYPES.map(t=>`<div class="rp-chip ${RP_T===t[0]?'on':''}" onclick="RP_T='${t[0]}';rpChips()">${Lx(t[1],t[2])}</div>`).join(''); }
+function reportOpen(id){
+  const q=id?qById(id):state.qList[state.curQ]; if(!q) return;
+  const k=qid(q); if(rpLoad().done.includes(k)){ toast(Lx('इस प्रश्न की रिपोर्ट आप पहले भेज चुके हैं — धन्यवाद','You have already reported this question — thank you')); return; }
+  RP_Q=q; RP_T='ans'; rpChips(); const n=document.getElementById('rp-note'); n.value=''; n.placeholder=Lx('सही उत्तर / गलती क्या है? (वैकल्पिक)','What is the correct answer / the mistake? (optional)');
+  document.getElementById('rp-sheet').hidden=false;
+}
+function reportClose(){ document.getElementById('rp-sheet').hidden=true; RP_Q=null; }
+function reportSend(){
+  if(!RP_Q) return; const o=rpLoad(); const k=qid(RP_Q);
+  o.q.push({qid:k,type:RP_T,note:(document.getElementById('rp-note').value||'').trim().slice(0,200),ans:(typeof RP_Q.ans==='number'?RP_Q.ans:-1),paper:(paperOf(RP_Q)||'').slice(0,120),lang:UI_LANG,t:Date.now()});
+  o.q=o.q.slice(-40); o.done.push(k); o.done=o.done.slice(-500); rpSave(o);
+  reportClose(); toast(Lx('✅ धन्यवाद! रिपोर्ट भेज दी गई — जाँच कर सुधार किया जाएगा','✅ Thank you! Report sent — it will be checked and fixed')); rpFlush();
+}
+async function rpFlush(){
+  const o=rpLoad(); if(!o.q.length || !navigator.onLine || rpFlush.busy) return; rpFlush.busy=true;
+  try{ const {auth,db}=await lbInit(); const uid=auth.currentUser.uid;
+    while(o.q.length){ const r=o.q[0];
+      await db.collection('reports').add({qid:r.qid,type:r.type,note:r.note||'',ans:r.ans,paper:r.paper||'',lang:r.lang||'',uid,ts:firebase.firestore.FieldValue.serverTimestamp()});
+      o.q.shift(); rpSave(o); }
+  }catch(e){ console.log('report',e); }
+  rpFlush.busy=false;
+}
+window.addEventListener('online',()=>rpFlush());
+(window.DATA_READY||Promise.resolve()).then(()=>setTimeout(rpFlush,6000));
+
+// ---- 2. figures of new questions arrive with the live update (no new APK needed) ----
+// A figure that is not bundled in the app is taken from the phone's store, else downloaded from live/img/ and kept for offline use.
+const IMG_URLS={};
+async function imgStored(name){ if(IMG_URLS[name]) return IMG_URLS[name]; const b=await liveGet('img:'+name); if(b){ try{ IMG_URLS[name]=URL.createObjectURL(b); }catch(e){ return null; } return IMG_URLS[name]; } return null; }
+async function imgDownload(name){ const r=await fetch(LIVE_BASE+'img/'+name,{cache:'no-store'}); if(!r.ok) throw new Error('img '+r.status); const b=await r.blob(); await liveSet('img:'+name,b); IMG_URLS[name]=URL.createObjectURL(b); return IMG_URLS[name]; }
+document.addEventListener('error',async e=>{
+  const im=e.target; if(!im || im.tagName!=='IMG' || !im.classList.contains('qimg') || im.dataset.lv) return;
+  const m=(im.getAttribute('src')||'').match(/img\/([A-Za-z0-9_]+\.webp)$/); if(!m) return; im.dataset.lv='1';
+  try{ im.src=(await imgStored(m[1])) || (await imgDownload(m[1])); }catch(x){ im.alt=Lx('चित्र लोड नहीं हुआ — इंटरनेट चालू करके दोबारा खोलें','Figure not loaded — go online and open again'); }
+},true);
+async function imgPrefetch(){
+  try{ if(!navigator.onLine) return; const man=await liveGet('manifest'); const L=(man&&man.imgs)||[]; let n=0;
+    for(const name of L){ if(await liveGet('img:'+name)) continue; try{ await imgDownload(name); n++; }catch(e){ break; } }
+    if(n) console.log('live figures',n);
+  }catch(e){}
+}
+const _liveCheck=liveCheck; liveCheck=async function(f){ await _liveCheck(f); try{ await hideSync(); }catch(e){} imgPrefetch(); };
+(window.DATA_READY||Promise.resolve()).then(()=>setTimeout(imgPrefetch,9000));
+
+// ---- 3. papers hidden for now (questions stay in the bank; list comes from live/manifest "hide", so a paper can return without a new APK) ----
+var HIDE_PAPERS=['दुग्ध संघ (Dairy Federation) भर्ती परीक्षा 2016 (28 फरवरी, 09:00 AM, Slot 1)','दुग्ध संघ (Dairy Federation) भर्ती परीक्षा 2016 (28 फरवरी, 12:00 PM, Slot 2)'];
+function paperHidden(n){ return !!n && HIDE_PAPERS.some(h=>n.indexOf(h)>=0); }
+const _pyqPapers=pyqPapers; pyqPapers=function(ex){ return _pyqPapers(ex).filter(p=>!paperHidden(p.name)); };
+async function hideSync(){ try{ const man=await liveGet('manifest'); if(man && Array.isArray(man.hide)){ HIDE_PAPERS=man.hide; if(typeof _pcCache==='object') for(const k in _pcCache) delete _pcCache[k]; } }catch(e){} }
+const _liveApply=liveApply; liveApply=async function(){ await hideSync(); return _liveApply(); };
+hideSync();
+
+// ---- 4. daily reminder at 7 PM if today's quiz is not done (local notification — works offline) ----
+const REM_HOUR=19, REM_IDS=[7101,7102,7103,7104,7105,7106,7107];
+async function remSchedule(){
+  try{ const C=window.Capacitor; if(!C||!C.isNativePlatform||!C.isNativePlatform()) return;
+    const LN=(C.Plugins&&C.Plugins.LocalNotifications)||(C.registerPlugin&&C.registerPlugin('LocalNotifications')); if(!LN) return;
+    const d=loadStorage(); if(!d.onb) return;
+    let p=await LN.checkPermissions(); if(p.display!=='granted'){ p=await LN.requestPermissions(); if(p.display!=='granted') return; }
+    await LN.cancel({notifications:REM_IDS.map(id=>({id}))}).catch(()=>{});
+    if(d.remOff) return;
+    const done=(d.daily||{})[isoLocal()]!=null || (lbLocal().daily||{})[isoLocal()]!=null;
+    const now=new Date(), list=[];
+    for(let i=0;i<7;i++){ const at=new Date(now.getFullYear(),now.getMonth(),now.getDate()+i,REM_HOUR,0,0);
+      if(at<=now || (i===0&&done)) continue;
+      list.push({id:REM_IDS[i],title:Lx('🔥 आज का क्विज़ बाकी है','🔥 Today\'s quiz is pending'),body:Lx('10 प्रश्न, 10 मिनट — streak टूटने न दें!','10 questions, 10 minutes — keep your streak!'),schedule:{at,allowWhileIdle:true},autoCancel:true}); }
+    if(list.length) await LN.schedule({notifications:list});
+  }catch(e){ console.log('reminder',e); }
+}
+function remToggle(){ const d=loadStorage(); d.remOff=!d.remOff; saveStorage(d); remSchedule(); toast(d.remOff?Lx('रोज़ का रिमाइंडर बंद','Daily reminder off'):Lx('रोज़ शाम 7 बजे रिमाइंडर चालू','Daily reminder on (7 PM)')); if(document.getElementById('dashboard').classList.contains('active')) refreshDash(); }
+(window.DATA_READY||Promise.resolve()).then(()=>setTimeout(remSchedule,5000));
+document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible') remSchedule(); });
+const _finishQuiz3=finishQuiz; finishQuiz=function(){ const r=_finishQuiz3.apply(this,arguments); try{ if(state.mode==='daily') setTimeout(remSchedule,800); }catch(e){} return r; };
+Object.assign(UI_EN,{"प्रश्न में गलती बताएँ":"Report a mistake","रद्द करें":"Cancel","भेजें":"Send","⚑ गलती बताएँ":"⚑ Report","रोज़ का रिमाइंडर":"Daily reminder","शाम 7 बजे":"7 PM","बंद":"Off"});
 
 </script>
 </body>
