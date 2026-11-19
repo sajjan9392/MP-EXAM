@@ -481,6 +481,24 @@ svg.i{display:block;flex-shrink:0}
 .guide-s{font-size:14px;line-height:1.6;color:var(--fg2);margin-bottom:14px}
 .guide-s li{margin:3px 0}
 
+
+/* ---- grouped exams ---- */
+.ax-search{padding:12px 16px 0}
+.ax-search input{width:100%;box-sizing:border-box;padding:11px 14px;border-radius:12px;border:1.5px solid var(--border);background:var(--bg2);color:var(--fg);font-size:15px;font-family:inherit}
+.ax-ag{margin:18px 16px 0;padding:10px 14px;border-radius:12px;background:var(--solid);color:var(--solid-fg);font-weight:700;font-size:15px;display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.ax-ag small{font-weight:500;font-size:11.5px;opacity:.8;text-align:right}
+.ax-gh{margin:14px 16px 6px;font-size:12.5px;font-weight:700;letter-spacing:.03em;color:var(--fg3);text-transform:uppercase}
+.ax-card{margin:0 16px;border:1px solid var(--border);border-radius:14px;background:var(--bg2);overflow:hidden}
+.ax-row{display:flex;align-items:center;gap:12px;padding:11px 12px;border-top:1px solid var(--line);cursor:pointer;min-width:0}
+.ax-row:first-child{border-top:none}
+.ax-row .eic{flex-shrink:0}
+.ax-row b{font-size:14.5px;display:block;line-height:1.25}
+.ax-row small{font-size:11.5px;color:var(--fg3);display:block;margin-top:2px;line-height:1.3}
+.ax-star{margin-left:auto;flex-shrink:0;border:1.5px solid var(--border);background:transparent;color:var(--fg2);border-radius:10px;padding:6px 10px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit}
+.ax-star.on{background:color-mix(in srgb,var(--primary) 12%,var(--bg2));border-color:var(--primary);color:var(--primary)}
+.ax-row.on{background:color-mix(in srgb,var(--primary) 8%,var(--bg2))}
+.ax-empty{margin:30px 16px;text-align:center;color:var(--fg3);font-size:14px}
+#xp-grid{padding-bottom:20px}
 </style>
 </head>
 <body>
@@ -564,7 +582,7 @@ svg.i{display:block;flex-shrink:0}
       <div class="install-text">App को Home Screen पर install करें — offline चलेगी</div>
       <button class="install-btn" onclick="installApp()">Install</button>
     </div>
-    <div class="sec-h"><span>परीक्षा चुनें</span><small id="qcount"></small></div>
+    <div class="sec-h"><span>मेरी परीक्षाएँ</span><small id="qcount"></small></div>
     <div class="exam-grid" id="exam-grid"></div>
     <div class="sec-h"><span>और भी</span></div>
     <div class="quick" id="quick"></div>
@@ -764,10 +782,16 @@ svg.i{display:block;flex-shrink:0}
   <div class="bottom-nav" data-nav="dashboard"></div>
 </div>
 
+<!-- ===== ALL EXAMS (agency -> field groups) ===== -->
+<div id="allexams" class="screen">
+  <div class="hdr"><button class="hdr-back" onclick="goBack()" aria-label="वापस"><svg class="i" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.4" stroke-linecap="round"><path d="M15 6l-6 6 6 6"/></svg></button><div class="hdr-txt"><div class="hdr-sub">एजेंसी व क्षेत्र के अनुसार</div><div class="hdr-title">सभी परीक्षाएँ</div></div></div>
+  <div class="scroll-body"><div class="ax-search"><input id="ax-q" type="search" placeholder="परीक्षा खोजें…" oninput="renderAllExams()" autocomplete="off"></div><div class="ca-filters no-tr" id="ax-tabs"></div><div id="ax-list" class="no-tr"></div></div>
+</div>
+
 <!-- ===== EXAM PICK (after name) ===== -->
 <div id="exam-pick" class="screen">
   <div class="hdr"><button class="hdr-back" id="xp-back" onclick="goBack()" aria-label="वापस"><svg class="i" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.4" stroke-linecap="round"><path d="M15 6l-6 6 6 6"/></svg></button><div class="hdr-txt"><div class="hdr-sub">एक या अधिक चुनें</div><div class="hdr-title">आपकी परीक्षाएँ</div></div></div>
-  <div class="scroll-body"><div class="xp-note">आप किन परीक्षाओं की तैयारी कर रहे हैं? पहली चुनी गई परीक्षा मुख्य होगी — आज का क्विज़ और साप्ताहिक लीडर बोर्ड उसी पर चलेगा।</div><div class="xp-grid" id="xp-grid"></div></div>
+  <div class="scroll-body"><div class="xp-note">आप किन परीक्षाओं की तैयारी कर रहे हैं? पहली चुनी गई परीक्षा मुख्य होगी — आज का क्विज़ और साप्ताहिक लीडर बोर्ड उसी पर चलेगा।</div><div class="ax-search"><input id="xp-q" type="search" placeholder="परीक्षा खोजें…" oninput="renderExamPick()" autocomplete="off"></div><div id="xp-grid" class="no-tr"></div></div>
   <div class="start-bar"><button class="btn btn-dark" onclick="saveExamPick()">आगे बढ़ें →</button></div>
 </div>
 
@@ -2304,6 +2328,78 @@ const _goBack2=goBack; goBack=function(){
   const r=_goBack2(); try{ afterGo(document.querySelector('.screen.active').id); }catch(e){} return r;
 };
 buildStatic(); try{ arrangeGrid(); }catch(e){}
+
+
+// ===================== 19 Nov 2026: exams grouped by agency -> field =====================
+const EX_GROUPS=[
+  {a:'MPPSC', n:['MPPSC','MPPSC'], f:['म.प्र. लोक सेवा आयोग','MP Public Service Commission'], g:[
+    {t:['राज्य स्तरीय सेवाएँ','State services'], k:['MPPSC','MPSFS']}]},
+  {a:'ESB', n:['ESB','ESB'], f:['कर्मचारी चयन मण्डल (पूर्व व्यापम / PEB)','Employees Selection Board (formerly Vyapam / PEB)'], g:[
+    {t:['पुलिस / वर्दी','Police / uniformed'], k:['Police Constable','ASI','Jail Prahari','Van Rakshak','Home Guard']},
+    {t:['समूह परीक्षाएँ (सामान्य)','Group exams (general)'], k:['Group 1','Group 2','Group 2B','Group 2 SG4','Assistant Grade 3','Patwari']},
+    {t:['स्वास्थ्य','Health'], k:['Group 5','Lab Technician','Drug Inspector','Ayush']},
+    {t:['इंजीनियरिंग / कंप्यूटर','Engineering / computer'], k:['Sub Engineer','Computer Operator']},
+    {t:['कृषि व अन्य विभाग','Agriculture & other departments'], k:['RAEO','Dairy Federation','MP Tourism']}]}
+];
+(function(){ const seen=new Set(EX_GROUPS.flatMap(a=>a.g.flatMap(g=>g.k))); const rest=EXAMS.map(e=>e.k).filter(k=>!seen.has(k)); if(rest.length) EX_GROUPS[1].g[4].k.push(...rest); })();
+function exAgency(k){ const a=EX_GROUPS.find(a=>a.g.some(g=>g.k.includes(k))); return a?a.a:''; }
+var AX_TAB='', _pcCache={};
+function pyqCount(k){ if(!(k in _pcCache)){ try{ _pcCache[k]=pyqPapers(k).length; }catch(e){ return 0; } } return _pcCache[k]; }
+function exMatch(e,q){ if(!q) return true; q=q.toLowerCase(); return [e.k,e.n,e.s,EN_EX[e.k]||'',(UI_EN&&UI_EN[e.n])||'',(UI_EN&&UI_EN[e.s])||''].join(' ').toLowerCase().includes(q); }
+function exGroupsHtml(q,tab,rowFn){
+  let out='';
+  EX_GROUPS.forEach(ag=>{ if(tab && tab!==ag.a) return; let inner='', n=0;
+    ag.g.forEach(g=>{ const L=g.k.map(exOf).filter(e=>e&&exMatch(e,q)); if(!L.length) return; n+=L.length;
+      inner+=(ag.g.length>1?`<div class="ax-gh">${Lx(g.t[0],g.t[1])}</div>`:'<div style="height:10px"></div>')+`<div class="ax-card">${L.map(rowFn).join('')}</div>`; });
+    if(n) out+=`<div class="ax-ag"><span>${Lx(ag.n[0],ag.n[1])} <span style="font-weight:500;opacity:.8">(${n})</span></span><small>${Lx(ag.f[0],ag.f[1])}</small></div>`+inner; });
+  return out || `<div class="ax-empty">${Lx('कोई परीक्षा नहीं मिली','No exam found')}</div>`;
+}
+function exSubL(e){ return UI_LANG==='en' ? ((UI_EN&&UI_EN[e.s])||e.s) : e.s; }
+function renderAllExams(){
+  ['ax-q','xp-q'].forEach(i=>{ const el=document.getElementById(i); if(el) el.placeholder=Lx('परीक्षा खोजें…','Search exam…'); });
+  const q=(document.getElementById('ax-q').value||'').trim(); const mine=loadStorage().exams||[];
+  document.getElementById('ax-tabs').innerHTML=[['',Lx('सभी','All')+` (${EXAMS.length})`]].concat(EX_GROUPS.map(a=>[a.a,Lx(a.n[0],a.n[1])])).map(([k,t])=>`<div class="ca-chip ${AX_TAB===k?'active':''}" onclick="AX_TAB='${k}';renderAllExams()">${t}</div>`).join('');
+  document.getElementById('ax-list').innerHTML=exGroupsHtml(q,AX_TAB,e=>{ const on=mine.includes(e.k), pc=pyqCount(e.k);
+    return `<div class="ax-row" onclick="goExam('${e.k}')">${eic(e,38)}<div style="min-width:0"><b>${escH(exNameL(e.k))}</b><small>${escH(exSubL(e))} • ${pc?pc+Lx(' पुराने पेपर',' old papers'):Lx('PYQ जल्द','PYQs soon')}</small></div><button class="ax-star ${on?'on':''}" onclick="event.stopPropagation();axToggleMine('${e.k}')">${on?Lx('✓ मेरी','✓ Mine'):Lx('+ जोड़ें','+ Add')}</button></div>`; })+'<div style="height:24px"></div>';
+}
+function axToggleMine(k){ const d=loadStorage(); d.exams=(d.exams||[]).slice(); const i=d.exams.indexOf(k);
+  if(i>=0){ if(d.exams.length===1){ toast(Lx('कम से कम एक परीक्षा रखें','Keep at least one exam')); return; } d.exams.splice(i,1); if(d.dexam===k) d.dexam=d.exams[0]; }
+  else d.exams.push(k);
+  if(!d.dexam) d.dexam=d.exams[0]; saveStorage(d); renderAllExams(); }
+function openAllExams(){ AX_TAB=''; const i=document.getElementById('ax-q'); if(i) i.value=''; renderAllExams(); go('allexams'); }
+
+// home: only my exams + one button to the full list
+arrangeGrid=function(){
+  const g=document.getElementById('exam-grid'); if(!g) return;
+  const sel=(loadStorage().exams||[]).filter(exOf);
+  const tiles=[...g.querySelectorAll('.ex-tile')]; const key=t=>(t.getAttribute('onclick')||'').replace(/^goExam\('|'\)$/g,'');
+  const order=sel.length?sel:EXAMS.slice(0,4).map(e=>e.k);
+  tiles.sort((a,b)=>{ const ia=order.indexOf(key(a)), ib=order.indexOf(key(b)); return (ia<0?99:ia)-(ib<0?99:ib); }).forEach(t=>g.appendChild(t));
+  tiles.forEach(t=>{ t.hidden=!order.includes(key(t)); });
+  let m=document.getElementById('ex-more'); if(!m){ m=document.createElement('div'); m.id='ex-more'; m.className='ex-more'; }
+  m.onclick=openAllExams; g.appendChild(m); m.classList.add('no-tr'); m.hidden=false;
+  m.textContent=Lx('सभी परीक्षाएँ देखें','See all exams')+` (${EXAMS.length}) →`;
+};
+// exam pick: same groups + search
+renderExamPick=function(){
+  const q=((document.getElementById('xp-q')||{}).value||'').trim();
+  document.getElementById('xp-grid').innerHTML=exGroupsHtml(q,'',e=>{ const i=XP_SEL.indexOf(e.k);
+    return `<div class="ax-row ${i>=0?'on':''}" onclick="xpToggle('${e.k}')">${eic(e,38)}<div style="min-width:0"><b>${escH(exNameL(e.k))}</b><small>${escH(exSubL(e))}</small></div><span class="ax-star ${i>=0?'on':''}">${i>=0?(i===0?Lx('✓ मुख्य','✓ Main'):'✓ '+(i+1)):Lx('चुनें','Select')}</span></div>`; });
+};
+// Exam INFO: my exams' notifications first, then the rest by agency
+const _renderEIL=renderExamInfoList; renderExamInfoList=async function(){
+  await _renderEIL(); if(eiFilter) return;
+  const box=document.getElementById('exam-list'); const L=await loadEInfo(); const mine=loadStorage().exams||[];
+  const rows={}; [...box.querySelectorAll('.ei-li')].forEach(r=>{ const m=(r.getAttribute('onclick')||'').match(/openEI\('([^']+)'\)/); if(m) rows[m[1]]=r.outerHTML; });
+  const tail=[...box.children].filter(c=>!c.classList.contains('ei-li')).map(c=>c.outerHTML).join('');
+  const sorted=L.slice().sort((a,b)=>eiDate(b.date)-eiDate(a.date));
+  const A=sorted.filter(e=>(e.app||[]).some(k=>mine.includes(k))), B=sorted.filter(e=>!A.includes(e));
+  const sec=(t,arr)=>arr.length?`<div class="ax-gh" style="margin:14px 14px 4px">${t} (${arr.length})</div>`+arr.map(e=>rows[e.id]||'').join(''):'';
+  box.innerHTML=sec(Lx('मेरी परीक्षाओं की अधिसूचनाएँ','Notifications for my exams'),A)+sec(Lx('ESB — अन्य अधिसूचनाएँ','ESB — other notifications'),B)+`<div class="ax-gh" style="margin:14px 14px 4px">MPPSC</div>`+tail;
+};
+GUIDES.allexams=[['सभी परीक्षाएँ','All exams'],['परीक्षाएँ एजेंसी (MPPSC / ESB) और क्षेत्र के अनुसार बँटी हैं। नाम से खोजें, दबाकर टेस्ट दें। "+ जोड़ें" से परीक्षा Home पर "मेरी परीक्षाएँ" में आ जाएगी।','Exams are grouped by agency (MPPSC / ESB) and field. Search by name, tap to take a test. "+ Add" puts an exam under "My exams" on Home.']];
+Object.assign(UI_EN,{"सभी परीक्षाएँ":"All exams","एजेंसी व क्षेत्र के अनुसार":"By agency and field","परीक्षा खोजें…":"Search exam…"});
+try{ arrangeGrid(); }catch(e){}
 
 </script>
 </body>
