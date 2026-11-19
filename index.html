@@ -1077,9 +1077,20 @@ const MISC_T='विविध';
 const STMAP={}; (TAX.subjects||[]).forEach(S=>S.topics.forEach(([tn,sts])=>sts.forEach(n=>{ STMAP[S.key+'|'+n]=tn; })));
 const qTp=(q)=>q.tp||STMAP[q.sub+'|'+q.tag]||MISC_T, qSt=(q)=>q.st||q.tag||'मिश्रित प्रश्न';
 const tkey=(q)=>q.sub+'|'+qTp(q)+'|'+qSt(q);
-function poolFor(){ return QUESTIONS.filter(q=>state.selSt.has(tkey(q))); }
+// same question repeated (in several PYQ papers / sources): shown in each paper, but only ONCE in topic-wise, full-length and daily tests
+const DUPK=new WeakMap();
+const DN_RE=/[\s.,;:!?'"“”‘’()\[\]{}\-–—।|]+/g, DN_NUM=/^\s*(q\.?|प्रश्न)?\s*\d+\s*[.):]\s*/i;
+function dnorm(s){ s=String(s||''); let im='';
+  if(s.indexOf('<')>=0){ if(s.indexOf('src=')>=0) im=(s.match(/src="([^"]+)"/g)||[]).join(' '); s=s.replace(/<[^>]*>/g,' '); }
+  return s.replace(DN_NUM,'').replace(DN_RE,'').toLowerCase()+im; }
+function dkey(q){ let k=DUPK.get(q); if(k===undefined){ const o=(q.opts||[]).map(dnorm); o.sort(); k=dnorm(q.q)+'#'+o.join('|'); DUPK.set(q,k); } return k; }
+function uniqQ(a){ const seen=new Set(); return a.filter(q=>{ const k=dkey(q); if(seen.has(k)) return false; seen.add(k); return true; }); }
+let UQ=null,UQsrc=null,UQn=-1;
+function allUniq(){ if(UQsrc!==QUESTIONS||UQn!==QUESTIONS.length){ UQ=uniqQ(QUESTIONS); UQsrc=QUESTIONS; UQn=QUESTIONS.length; } return UQ; }
+setTimeout(()=>{ try{ allUniq(); }catch(e){} },5000);  // warm the duplicate keys in the background
+function poolFor(){ return uniqQ(QUESTIONS.filter(q=>state.selSt.has(tkey(q)))); }
 function treeFor(exam){
-  const counts={}; QUESTIONS.forEach(q=>{ const k=tkey(q); counts[k]=(counts[k]||0)+1; });
+  const counts={}; allUniq().forEach(q=>{ const k=tkey(q); counts[k]=(counts[k]||0)+1; });
   return examSubs(exam).map(sk=>{
     const def=(TAX.subjects||[]).find(v=>v.key===sk) || {key:sk,name:subName(sk),topics:[]};
     const topics=def.topics.map(([tn,sts])=>({name:tn, subs:sts.map(n=>({name:n}))}));
@@ -1179,7 +1190,7 @@ function diffOk(q){ const d=q.d||3; return setup.diff==='all' || (setup.diff==='
 function basePool(){
   if(state.mode==='topic') return poolFor();
   const subs=new Set(examSubs(state.cur));
-  return QUESTIONS.filter(q=>subs.has(q.sub));
+  return uniqQ(QUESTIONS.filter(q=>subs.has(q.sub)));
 }
 function updateSetupNote(){
   const el=document.getElementById('setup-note');
@@ -1280,12 +1291,12 @@ function fullMixList(exam,total){
   const mix=FULL_MIX[exam]; if(!mix) return null;
   const out=[];
   mix.forEach(([subs,n])=>{
-    const by=subs.map(sb=>shuffle(QUESTIONS.filter(q=>q.sub===sb && !q.paper && diffOk(q)))).filter(a=>a.length);
+    const by=subs.map(sb=>uniqQ(shuffle(QUESTIONS.filter(q=>q.sub===sb && !q.paper && diffOk(q))))).filter(a=>a.length);
     // share n equally among the subjects of this section; leftovers from small subjects go to bigger ones
     let need=n, i=0, guard=0;
     while(need>0 && by.some(a=>a.length) && guard<10000){ const a=by[i%by.length]; if(a.length){ out.push(a.pop()); need--; } i++; guard++; }
   });
-  return out.slice(0,total);
+  return uniqQ(out).slice(0,total);
 }
 function launchQuiz(count, minutes){
   if(state.mode==='full'){ const l=fullMixList(state.cur,count); if(l && l.length>=Math.min(20,count)){ beginQuiz(l, minutes); return; } }
@@ -1293,7 +1304,7 @@ function launchQuiz(count, minutes){
   const filtered = pool.filter(diffOk);
   if(filtered.length >= 5) pool = filtered; else if(setup.diff!=='all' && pool.length) toast('इस कठिनाई के कम प्रश्न हैं — सभी स्तर मिलाए गए');
   if(!pool.length){ toast('इस चयन में अभी प्रश्न नहीं हैं'); return; }
-  pool = shuffle(pool);
+  pool = uniqQ(shuffle(pool));
   beginQuiz(pool.slice(0, Math.min(count, pool.length)), minutes);
 }
 
@@ -1302,7 +1313,7 @@ function seededRng(str){ let h=1779033703^str.length; for(let i=0;i<str.length;i
 function startDaily(day){
   const d=loadStorage(); const ex=dailyExam(d); const dk=(typeof day==='string'&&day)||isoLocal();
   const subs=new Set(ex?examSubs(ex):[]);
-  const pool=QUESTIONS.filter(q=>(!subs.size||subs.has(q.sub)) && q.opts && q.opts.length>=2);
+  const pool=uniqQ(QUESTIONS.filter(q=>(!subs.size||subs.has(q.sub)) && q.opts && q.opts.length>=2));
   if(!pool.length){ toast('प्रश्न लोड हो रहे हैं…'); return; }
   const rnd=seededRng((dk===isoLocal()?todayS():new Date(dk+'T00:00:00').toDateString())+'|'+ex);
   // pick from different subjects in turn so the quiz is mixed
