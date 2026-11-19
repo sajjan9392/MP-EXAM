@@ -378,6 +378,8 @@ svg.i{display:block;flex-shrink:0}
 .ex-tile:after{content:"";position:absolute;right:-26px;bottom:-30px;width:96px;height:96px;border-radius:50%;background:rgba(255,255,255,.12)}
 .ex-t{font-family:'Poppins','Noto Sans Devanagari',sans-serif;font-weight:700;font-size:16px;margin-top:auto;line-height:1.25;padding-right:44px}
 .ex-s{font-size:11.5px;opacity:.92;margin-top:2px}
+.ex-tile .ex-s{display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden}
+.ex-tile{padding-top:56px}
 .ex-p{position:absolute;right:12px;top:52px;font-size:9.5px;opacity:.85}
 .ex-ring{position:absolute;right:10px;top:10px;width:40px;height:40px}
 .ex-ring svg{width:40px;height:40px;transform:rotate(-90deg)}
@@ -2331,21 +2333,47 @@ buildStatic(); try{ arrangeGrid(); }catch(e){}
 
 
 // ===================== 19 Nov 2026: exams grouped by agency -> field =====================
+// ESB's own structure: Group-1..5 (with sub-groups) + exams held by name. Old paper-wise keys are folded into these.
+const EX_ALIAS={'Group 2':'RAEO','Patwari':'Group 2 SG4','Lab Technician':'Sub Engineer','Computer Operator':'Assistant Grade 3','Ayush':'Group 5','Dairy Federation':'Dept','MP Tourism':'Dept','Drug Inspector':'Dept'};
+const EX_DEF={
+  'Group 1':{n:'समूह-1',en:'Group-1',s:'उप-समूह 1, 2, 3 • अधिकारी स्तर के पद',se:'Sub-groups 1, 2, 3 • officer-level posts',al:'group 1 samuh'},
+  'RAEO':{n:'समूह-2 उप-समूह 1',en:'Group-2 Sub-group 1',s:'ग्रामीण कृषि / उद्यान विस्तार अधिकारी',se:'Rural agriculture / horticulture extension officer',al:'raeo कृषि krishi group 2'},
+  'Group 2B':{n:'समूह-2 उप-समूह 3',en:'Group-2 Sub-group 3',s:'स्वच्छता निरीक्षक, केमिस्ट व अन्य पद',se:'Sanitary inspector, chemist & other posts',al:'group 2'},
+  'Group 2 SG4':{n:'समूह-2 उप-समूह 4',en:'Group-2 Sub-group 4',s:'पटवारी, सहायक संपरीक्षक व अन्य',se:'Patwari, assistant auditor & others',al:'patwari पटवारी group 2'},
+  'Sub Engineer':{n:'समूह-3',en:'Group-3',s:'उपयंत्री, मानचित्रकार, लैब टेक्नीशियन',se:'Sub engineer, draftsman, lab technician',al:'sub engineer lab technician उपयंत्री group 3'},
+  'Assistant Grade 3':{n:'समूह-4',en:'Group-4',s:'सहायक ग्रेड-3, स्टेनो, डाटा एंट्री ऑपरेटर',se:'Assistant Grade-3, steno, data entry operator',al:'assistant grade 3 steno deo computer operator group 4'},
+  'Group 5':{n:'समूह-5',en:'Group-5',s:'स्टाफ नर्स, पैरामेडिकल, आयुष',se:'Staff nurse, paramedical, AYUSH',al:'nursing nurse ayush आयुष group 5'},
+  'ASI':{n:'SI / सूबेदार / ASI',en:'SI / Subedar / ASI',s:'पुलिस उप निरीक्षक संवर्ग',se:'Police sub-inspector cadre',al:'si asi subedar'},
+  'Dept':{n:'विभागीय भर्ती',en:'Departmental recruitment',s:'दुग्ध संघ, पर्यटन, ड्रग इंस्पेक्टर (पुराने पेपर)',se:'Dairy Federation, Tourism, Drug Inspector (old papers)',al:'dairy tourism drug inspector दुग्ध पर्यटन',c:'#0284C7',d:'M3 21V8l6-3v16M9 21V3h12v18M3 21h18M13 7h4M13 11h4M13 15h4'}
+};
+(function(){
+  TAX.exams=TAX.exams||{};
+  Object.entries(EX_ALIAS).forEach(([o,nk])=>{ const u=new Set([...(TAX.exams[nk]||[]),...(TAX.exams[o]||[])]); TAX.exams[nk]=SUB_ORDER.filter(x=>u.has(x)).concat([...u].filter(x=>!SUB_ORDER.includes(x))); });
+  if(!exOf('Dept')) EXAMS.push({k:'Dept',n:'',s:'',c:EX_DEF.Dept.c,d:EX_DEF.Dept.d});
+  for(let i=EXAMS.length-1;i>=0;i--) if(EX_ALIAS[EXAMS[i].k]) EXAMS.splice(i,1);
+  EXAMS.forEach(e=>{ const d=EX_DEF[e.k]; if(d){ e.n=d.n; e.s=d.s; EN_EX[e.k]=d.en; UI_EN[d.s]=d.se; UI_EN[d.n]=d.en; e.al=d.al; } });
+  const _eo=examsOf; examsOf=function(q){ const l=_eo(q); for(let i=0;i<l.length;i++) if(EX_ALIAS[l[i]]) return [...new Set(l.map(k=>EX_ALIAS[k]||k))]; return l; };
+  const _le=loadEInfo; loadEInfo=async function(){ const L=await _le(); L.forEach(e=>{ if(!e._al){ e._al=1; e.app=[...new Set((e.app||[]).map(k=>EX_ALIAS[k]||k))]; } }); return L; };
+  try{ const d=loadStorage(); const m=k=>EX_ALIAS[k]||k; let ch=false;
+    if(d.exams){ const n=[...new Set(d.exams.map(m))]; if(n.join()!==d.exams.join()){ d.exams=n; ch=true; } }
+    ['exam','dexam'].forEach(f=>{ if(d[f]&&EX_ALIAS[d[f]]){ d[f]=m(d[f]); ch=true; } });
+    (d.history||[]).forEach(h=>{ if(EX_ALIAS[h.exam]){ h.exam=m(h.exam); ch=true; } });
+    if(ch) saveStorage(d); }catch(e){}
+  buildStatic();
+})();
 const EX_GROUPS=[
   {a:'MPPSC', n:['MPPSC','MPPSC'], f:['म.प्र. लोक सेवा आयोग','MP Public Service Commission'], g:[
     {t:['राज्य स्तरीय सेवाएँ','State services'], k:['MPPSC','MPSFS']}]},
   {a:'ESB', n:['ESB','ESB'], f:['कर्मचारी चयन मण्डल (पूर्व व्यापम / PEB)','Employees Selection Board (formerly Vyapam / PEB)'], g:[
-    {t:['पुलिस / वर्दी','Police / uniformed'], k:['Police Constable','ASI','Jail Prahari','Van Rakshak','Home Guard']},
-    {t:['समूह परीक्षाएँ (सामान्य)','Group exams (general)'], k:['Group 1','Group 2','Group 2B','Group 2 SG4','Assistant Grade 3','Patwari']},
-    {t:['स्वास्थ्य','Health'], k:['Group 5','Lab Technician','Drug Inspector','Ayush']},
-    {t:['इंजीनियरिंग / कंप्यूटर','Engineering / computer'], k:['Sub Engineer','Computer Operator']},
-    {t:['कृषि व अन्य विभाग','Agriculture & other departments'], k:['RAEO','Dairy Federation','MP Tourism']}]}
+    {t:['समूह परीक्षाएँ (Group 1 से 5)','Group exams (Group 1 to 5)'], k:['Group 1','RAEO','Group 2B','Group 2 SG4','Sub Engineer','Assistant Grade 3','Group 5']},
+    {t:['नाम से होने वाली परीक्षाएँ — वर्दी','Exams held by name — uniformed'], k:['Police Constable','ASI','Jail Prahari','Van Rakshak','Home Guard']},
+    {t:['नाम से होने वाली परीक्षाएँ — विभागीय','Exams held by name — departmental'], k:['Dept']}]}
 ];
-(function(){ const seen=new Set(EX_GROUPS.flatMap(a=>a.g.flatMap(g=>g.k))); const rest=EXAMS.map(e=>e.k).filter(k=>!seen.has(k)); if(rest.length) EX_GROUPS[1].g[4].k.push(...rest); })();
+(function(){ const seen=new Set(EX_GROUPS.flatMap(a=>a.g.flatMap(g=>g.k))); const rest=EXAMS.map(e=>e.k).filter(k=>!seen.has(k)); if(rest.length) EX_GROUPS[1].g[2].k.push(...rest); })();
 function exAgency(k){ const a=EX_GROUPS.find(a=>a.g.some(g=>g.k.includes(k))); return a?a.a:''; }
 var AX_TAB='', _pcCache={};
 function pyqCount(k){ if(!(k in _pcCache)){ try{ _pcCache[k]=pyqPapers(k).length; }catch(e){ return 0; } } return _pcCache[k]; }
-function exMatch(e,q){ if(!q) return true; q=q.toLowerCase(); return [e.k,e.n,e.s,EN_EX[e.k]||'',(UI_EN&&UI_EN[e.n])||'',(UI_EN&&UI_EN[e.s])||''].join(' ').toLowerCase().includes(q); }
+function exMatch(e,q){ if(!q) return true; q=q.toLowerCase(); return [e.k,e.n,e.s,e.al||'',EN_EX[e.k]||'',(UI_EN&&UI_EN[e.n])||'',(UI_EN&&UI_EN[e.s])||''].join(' ').toLowerCase().includes(q); }
 function exGroupsHtml(q,tab,rowFn){
   let out='';
   EX_GROUPS.forEach(ag=>{ if(tab && tab!==ag.a) return; let inner='', n=0;
