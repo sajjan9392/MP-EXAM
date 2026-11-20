@@ -1954,11 +1954,18 @@ async function liveCheck(force){
     const man=await liveFetch('manifest.json');
     const have=(await liveGet('manifest'))||{files:{}};
     const files=man.files||{}; const got=[];
-    for(const [f,h] of Object.entries(files)){
-      if(have.files && have.files[f]===h) continue;
+    // small files (current affairs) first, the big question patch last; progress is saved after every file,
+    // so a slow or broken download never holds back the news and is not repeated from the start
+    const done={}; Object.keys(files).forEach(f=>{ if(have.files && have.files[f]===files[f]) done[f]=files[f]; });
+    const order=Object.keys(files).sort((x,y)=>(x==='qpatch.json')-(y==='qpatch.json'));
+    let early=false;
+    for(const f of order){
+      if(done[f]===files[f]) continue;
+      if(f==='qpatch.json' && got.length && !early){ early=true; await liveApply(); toast('📰 नया करंट अफेयर्स आ गया'); }
       const j=await liveFetch(f);
       const key=f.replace(/\.json$/,'');            // ca-index, ca-2026-10, qpatch
       await liveSet(key,j); got.push(key);
+      done[f]=files[f]; await liveSet('manifest',Object.assign({},man,{files:Object.assign({},done)}));
     }
     await liveSet('manifest',man);
     // explanation files: separate manifest so older app versions never download them
@@ -1975,11 +1982,25 @@ async function liveCheck(force){
     if(got.length){
       await liveApply();
       const nCA=got.filter(k=>/^ca-\d/.test(k)).length;
-      toast(nCA?'📰 नया करंट अफेयर्स आ गया':'✅ प्रश्न बैंक अपडेट हुआ');
+      if(!early || got.includes('qpatch')) toast(nCA&&!early?'📰 नया करंट अफेयर्स आ गया':'✅ प्रश्न बैंक अपडेट हुआ');
     }
   }catch(e){ console.log('live',e); }
 }
+// A new APK bundles newer data than the patches saved on the phone by an older version: drop those saved
+// patches once (figures are kept), so old current affairs / questions can never cover the newer bundled ones.
+async function liveBaseCheck(){
+  try{
+    const base=(QUESTIONS.length+CANCELQ.length)+'|'+((CA_IDX&&CA_IDX.updated)||'');
+    if(localStorage.getItem('ps_base')===base) return;
+    const db=await liveDB();
+    if(db) await new Promise(res=>{ try{ const tx=db.transaction('kv','readwrite'); const st=tx.objectStore('kv'); const rq=st.getAllKeys();
+      rq.onsuccess=()=>{ (rq.result||[]).forEach(k=>{ if(!/^img:/.test(String(k))) st.delete(k); }); };
+      tx.oncomplete=()=>res(); tx.onerror=()=>res(); }catch(e){ res(); } });
+    localStorage.removeItem('ps_live_t'); localStorage.setItem('ps_base',base);
+  }catch(e){ console.log('live base',e); }
+}
 async function liveInit(){
+  await liveBaseCheck();
   await liveApply();
   liveCheck(false);
   window.addEventListener('online',()=>liveCheck(false));
