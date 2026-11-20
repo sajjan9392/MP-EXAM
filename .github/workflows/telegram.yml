@@ -1,0 +1,24 @@
+# Pariksha Sarthi — Telegram channel par roz 5 Current Affairs quiz
+# Roz subah ~7:53 IST: sabse naye din ke CA se 5 quiz + app ka link channel par post hota hai.
+# Naya CA na mile to purane CA se 5 "Revision" quiz jate hain.
+# Haath se bhi chala sakte hain: Actions → Telegram quiz → Run workflow.
+# Secret chahiye: TELEGRAM_BOT_TOKEN (BotFather ka token). Bot channel ka admin hona chahiye (Post/Manage Messages).
+name: Telegram quiz
+on:
+  schedule:
+    - cron: '23 2 * * *'
+  workflow_dispatch:
+jobs:
+  quiz:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.12' }
+      - name: Send quiz
+        env:
+          TG_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TG_CHAT: '@PARIKSHASARTHIMPEXAMSPREP'
+        run: python3 tools/telegram_quiz.py
