@@ -13,6 +13,9 @@ on:
     paths-ignore:
       - 'live/**'     # daily CA / question updates reach the app online — no new APK build
       - 'privacy.html'  # policy page only (served by GitHub Pages)
+      - 'tools/**'      # helper scripts (live update, notification, telegram) are not part of the app
+      - '.github/workflows/notify.yml'
+      - '.github/workflows/telegram.yml'
   workflow_dispatch:
 
 jobs:

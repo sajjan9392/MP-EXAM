@@ -1,5 +1,5 @@
 """Send one FCM notification to topic 'all' (Pariksha Sarthi).
-Manual run: uses IN_TITLE / IN_BODY. Scheduled run: only if live/ changed in the last 24 h."""
+Manual run: uses IN_TITLE / IN_BODY. Push run (live/ca-index.json changed): only if the current-affairs date is new."""
 import json, os, subprocess, sys
 import requests
 from google.oauth2 import service_account
@@ -7,14 +7,22 @@ from google.auth.transport.requests import Request
 
 title, body = (os.environ.get('IN_TITLE') or '').strip(), (os.environ.get('IN_BODY') or '').strip()
 if not title:
-    log = subprocess.run(['git', 'log', '--since=24 hours ago', '--name-only', '--pretty=format:', '--', 'live/'],
-                         capture_output=True, text=True).stdout.split()
-    if not log:
-        print('live/ me 24 ghante se koi update nahi — notification nahi bheja'); sys.exit(0)
-    if any(f.startswith('live/ca-') for f in log):
-        title, body = '📰 नया करंट अफेयर्स आ गया', 'आज का करंट अफेयर्स पढ़ें और क्विज़ दें — Pariksha Sarthi'
-    else:
-        title, body = '✅ प्रश्न बैंक अपडेट हुआ', 'नए और सुधरे प्रश्न ऐप में जुड़ गए हैं — अभ्यास शुरू करें'
+    # push run: only when this push brought a NEW current-affairs date (live/ca-index.json "updated" changed)
+    def upd(txt):
+        try: return (json.loads(txt).get('updated') or '').strip()
+        except Exception: return ''
+    try: now = upd(open('live/ca-index.json', encoding='utf-8').read())
+    except Exception: now = ''
+    before = (os.environ.get('BEFORE') or '').strip()
+    old = ''
+    if before and set(before) != {'0'}:
+        old = upd(subprocess.run(['git', 'show', before + ':live/ca-index.json'], capture_output=True, text=True).stdout)
+    if not now or now == old:
+        print('current affairs ki nayi tarikh nahi (', old, '->', now, ') — notification nahi bheja'); sys.exit(0)
+    MON = ['जनवरी', 'फरवरी', 'मार्च', 'अप्रैल', 'मई', 'जून', 'जुलाई', 'अगस्त', 'सितंबर', 'अक्टूबर', 'नवंबर', 'दिसंबर']
+    y, m, d = now.split('-')
+    title = f'📰 {int(d)} {MON[int(m) - 1]} {y} का करंट अफेयर्स आ गया'
+    body = 'आज सुबह की शुरुआत करंट अफेयर्स से करें — पढ़ें और क्विज़ दें'
 body = body or 'Pariksha Sarthi'
 info = json.loads(os.environ['SA'])
 cred = service_account.Credentials.from_service_account_info(info, scopes=['https://www.googleapis.com/auth/firebase.messaging'])

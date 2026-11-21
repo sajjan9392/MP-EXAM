@@ -1,11 +1,12 @@
 # Pariksha Sarthi — push notification (Firebase Cloud Messaging, topic "all")
-# Roz subah ~7:40 IST: agar pichhle 24 ghante me live/ update hua (naya CA / prashn) to sabhi phones par notification.
+# Jab subah ka live push naye din ka current affairs laata hai (live/ca-index.json ki "updated" tarikh badalti hai) to sabhi phones par notification: "<tarikh> ka current affairs aa gaya".
 # Haath se bhi chala sakte hain: Actions → Send notification → Run workflow (title + message likhkar).
 # Secret chahiye: FCM_SERVICE_ACCOUNT (Firebase → Project settings → Service accounts → private key JSON)
 name: Send notification
 on:
-  schedule:
-    - cron: '11 2 * * *'
+  push:
+    branches: [ main ]
+    paths: [ 'live/ca-index.json' ]   # sent right after the morning live push that brings a new day's current affairs
   workflow_dispatch:
     inputs:
       title: { description: 'Title (khali = apne-aap)', required: false }
@@ -23,6 +24,7 @@ jobs:
           SA: ${{ secrets.FCM_SERVICE_ACCOUNT }}
           IN_TITLE: ${{ github.event.inputs.title }}
           IN_BODY: ${{ github.event.inputs.body }}
+          BEFORE: ${{ github.event.before }}
         run: |
           if [ -z "$SA" ]; then echo "::warning::FCM_SERVICE_ACCOUNT secret nahi mila — notification skip"; exit 0; fi
           pip install -q google-auth requests
