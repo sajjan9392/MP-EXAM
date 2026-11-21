@@ -509,6 +509,10 @@ svg.i{display:block;flex-shrink:0}
 .rp-note{width:100%;box-sizing:border-box;border:1.5px solid var(--border);border-radius:12px;background:var(--bg2);color:var(--fg);font:inherit;font-size:14px;padding:10px;margin-bottom:12px;resize:none}
 .rp-x{margin-left:8px}
 #rp-sheet{z-index:61}
+
+.tt-only{margin:14px 16px 0;padding:12px 14px;border-radius:12px;background:color-mix(in srgb,var(--amber) 12%,var(--bg2));color:var(--fg2);font-size:13px;line-height:1.55}
+.xp-h{margin:18px 16px 0;font-size:15px;font-weight:700}
+.xp-h small{display:block;font-weight:500;font-size:12px;color:var(--fg3);margin-top:2px}
 </style>
 </head>
 <body>
@@ -592,7 +596,7 @@ svg.i{display:block;flex-shrink:0}
       <div class="install-text">App को Home Screen पर install करें — offline चलेगी</div>
       <button class="install-btn" onclick="installApp()">Install</button>
     </div>
-    <div class="sec-h"><span>मेरी परीक्षाएँ</span><small id="qcount"></small></div>
+    <div class="sec-h"><span>परीक्षा चुनें</span><small id="qcount"></small></div>
     <div class="exam-grid" id="exam-grid"></div>
     <div class="sec-h"><span>और भी</span></div>
     <div class="quick" id="quick"></div>
@@ -613,11 +617,12 @@ svg.i{display:block;flex-shrink:0}
 <div id="testtype" class="screen">
   <div class="hdr"><button class="hdr-back" onclick="goBack()" aria-label="वापस"><svg class="i" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.4" stroke-linecap="round"><path d="M15 6l-6 6 6 6"/></svg></button><div class="eic" id="tt-ic"></div><div class="hdr-txt"><div class="hdr-sub" id="tt-sub">परीक्षा</div><div class="hdr-title" id="tt-title">MPPSC</div></div></div>
   <div class="scroll-body">
-    <div class="card tt" onclick="go('topics')"><div class="li-ic" style="color:#2563EB"><svg class="i" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 17a5 5 0 1 0 0-10 5 5 0 0 0 0 10zM12 13.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z"/></svg></div><div class="li-main"><div class="tt-t">Topic-wise Test</div><div class="tt-d">विषय → टॉपिक → सबटॉपिक चुनकर test</div></div><svg class="i" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--fg3)" stroke-width="2.4" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg></div>
-    <div class="card tt" onclick="startFullTest()"><div class="li-ic" style="color:#137A3B"><svg class="i" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6v18h12V7zM14 3v4h4M9 12h6M9 16h6"/></svg></div><div class="li-main"><div class="tt-t">Full Length Test</div><div class="tt-d">असली exam pattern • तय प्रश्न व समय</div></div><svg class="i" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--fg3)" stroke-width="2.4" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg></div>
+    <div class="card tt" id="tt-topic" onclick="go('topics')"><div class="li-ic" style="color:#2563EB"><svg class="i" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 17a5 5 0 1 0 0-10 5 5 0 0 0 0 10zM12 13.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z"/></svg></div><div class="li-main"><div class="tt-t">Topic-wise Test</div><div class="tt-d">विषय → टॉपिक → सबटॉपिक चुनकर test</div></div><svg class="i" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--fg3)" stroke-width="2.4" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg></div>
+    <div class="tt-only" id="tt-only" hidden>इस परीक्षा में विषय विशेष के प्रश्न आते हैं, इसलिए यहाँ केवल पुराने प्रश्नपत्र दिए गए हैं।</div>
+    <div class="card tt" id="tt-full" onclick="startFullTest()"><div class="li-ic" style="color:#137A3B"><svg class="i" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6v18h12V7zM14 3v4h4M9 12h6M9 16h6"/></svg></div><div class="li-main"><div class="tt-t">Full Length Test</div><div class="tt-d">असली exam pattern • तय प्रश्न व समय</div></div><svg class="i" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--fg3)" stroke-width="2.4" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg></div>
     <div class="card tt" onclick="startPYQ()"><div class="li-ic" style="color:#9A6B00"><svg class="i" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 7v5l3 2"/></svg></div><div class="li-main"><div class="tt-t">पुराने प्रश्नपत्र (PYQ)</div><div class="tt-d" id="tt-pyq-d">साल-वार पूरा पेपर, मूल क्रम में</div></div><svg class="i" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--fg3)" stroke-width="2.4" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg></div>
     <div class="card tt" id="tt-info" onclick="openExamInfoFor(state.cur)"><div class="li-ic" style="color:#0E7490"><svg class="i" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20zM12 11v6M12 7.5v.5"/></svg></div><div class="li-main"><div class="tt-t">परीक्षा जानकारी (Exam INFO)</div><div class="tt-d" id="tt-info-d">अंकन, समय, न्यूनतम अंक, चरण, पात्रता, सिलेबस</div></div></div>
-    <div class="card syl"><div class="syl-h">Syllabus के विषय</div><div id="syllabus-tags"></div></div>
+    <div class="card syl" id="tt-syl"><div class="syl-h">Syllabus के विषय</div><div id="syllabus-tags"></div></div>
   </div>
 </div>
 
@@ -795,7 +800,7 @@ svg.i{display:block;flex-shrink:0}
 
 <!-- ===== ALL EXAMS (agency -> field groups) ===== -->
 <div id="allexams" class="screen">
-  <div class="hdr"><button class="hdr-back" onclick="goBack()" aria-label="वापस"><svg class="i" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.4" stroke-linecap="round"><path d="M15 6l-6 6 6 6"/></svg></button><div class="hdr-txt"><div class="hdr-sub">एजेंसी व क्षेत्र के अनुसार</div><div class="hdr-title">सभी परीक्षाएँ</div></div></div>
+  <div class="hdr"><button class="hdr-back" onclick="goBack()" aria-label="वापस"><svg class="i" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.4" stroke-linecap="round"><path d="M15 6l-6 6 6 6"/></svg></button><div class="hdr-txt"><div class="hdr-sub">विषय विशेष की उपाधि वाली • केवल पुराने प्रश्नपत्र</div><div class="hdr-title">अन्य परीक्षाएँ</div></div></div>
   <div class="scroll-body"><div class="ax-search"><input id="ax-q" type="search" placeholder="परीक्षा खोजें…" oninput="renderAllExams()" autocomplete="off"></div><div class="ca-filters no-tr" id="ax-tabs"></div><div id="ax-list" class="no-tr"></div></div>
 </div>
 
@@ -2583,7 +2588,7 @@ function applyExamCfg(cfg){
   Object.assign(EX_ALIAS,cfg.alias||{});
   (cfg.add||[]).forEach(e=>{ if(!e||!e.k) return;
     let x=exOf(e.k); if(!x){ x={k:e.k,n:e.n||e.k,s:e.s||'',c:e.c||'#475569',d:e.d||BOOK_D}; EXAMS.push(x); }
-    if(e.n) x.n=e.n; if(e.s!=null) x.s=e.s; if(e.c) x.c=e.c; if(e.d) x.d=e.d; if(e.al) x.al=e.al;
+    if(typeof e.spec==='boolean') x.spec=e.spec; if(e.n) x.n=e.n; if(e.s!=null) x.s=e.s; if(e.c) x.c=e.c; if(e.d) x.d=e.d; if(e.al) x.al=e.al;
     if(e.en){ EN_EX[e.k]=e.en; UI_EN[x.n]=e.en; } if(e.se) UI_EN[x.s]=e.se;
     if(e.g){ EX_GROUPS.forEach(ag=>ag.g.forEach(g=>{ const i=g.k.indexOf(e.k); if(i>=0 && g.id!==e.g) g.k.splice(i,1); }));
       const g=exGroupOf(e.g,(cfg.groups||{})[e.g]||EXCFG_DEFAULT.groups[e.g]||{a:'ESB',t:[e.g,e.g]}); if(g && !g.k.includes(e.k)) g.k.push(e.k); }
@@ -2599,7 +2604,7 @@ function applyExamCfg(cfg){
 function exDiscover(){
   let added=false; const cnt={}; const subs={};
   QUESTIONS.forEach(q=>{ const L=examsOf(q); for(let i=0;i<L.length;i++){ const k=L[i]; cnt[k]=(cnt[k]||0)+1; (subs[k]=subs[k]||new Set()).add(q.sub); } });
-  Object.keys(cnt).forEach(k=>{ if(!exOf(k)){ EXAMS.push({k,n:k,s:'',c:'#475569',d:BOOK_D}); const g=exGroupOf('other',EXCFG_DEFAULT.groups.other); if(!g.k.includes(k)) g.k.push(k); added=true; } });
+  Object.keys(cnt).forEach(k=>{ if(!exOf(k)){ EXAMS.push({k,n:k,s:'',c:'#475569',d:BOOK_D,auto:true}); const g=exGroupOf('other',EXCFG_DEFAULT.groups.other); if(!g.k.includes(k)) g.k.push(k); added=true; } });
   TAX.exams=TAX.exams||{};
   EXAMS.forEach(e=>{ if(!TAX.exams[e.k] && subs[e.k]){ TAX.exams[e.k]=SUB_ORDER.filter(x=>subs[e.k].has(x)).concat([...subs[e.k]].filter(x=>x&&!SUB_ORDER.includes(x))); added=true; } });
   return added;
@@ -2612,6 +2617,62 @@ async function exCfgSync(){ try{ const man=await liveGet('manifest'); if(man && 
 // old papers newest first by the exam year written in the paper name
 (function(){ const _pp=pyqPapers; pyqPapers=function(ex){ const L=_pp(ex); L.forEach(p=>{ const m=String(p.name).match(/(?:19|20)\d\d/); if(m) p.y=+m[0]; });
   return L.sort((a,b)=>(b.y-a.y)||a.name.localeCompare(b.name)); }; })();
+exRebuild();
+
+
+// ===================== 21 Nov 2026 (2): exams anyone can take on Home; subject-specific exams on their own page with old papers only =====================
+var EX_SPEC=new Set(['Assistant professor','ADPO','Group 1','RAEO','Sub Engineer','Group 5','Dept','PHUNT']);
+function exIsSpec(k){ const e=exOf(k); if(!e) return true; if(typeof e.spec==='boolean') return e.spec; return EX_SPEC.has(k) || e.auto===true; }
+function exGen(){ return EXAMS.filter(e=>!exIsSpec(e.k)).map(e=>e.k); }
+var EX_FILTER=null;
+(function(){ const _em=exMatch; exMatch=function(e,q){ return (!EX_FILTER||EX_FILTER(e)) && _em(e,q); }; })();
+function exGroupsF(q,tab,rowFn,filter){ EX_FILTER=filter; try{ return exGroupsHtml(q,tab,rowFn); } finally { EX_FILTER=null; } }
+// the main exam (daily quiz, leader board) is always one with a question bank
+(function(){ const _de=dailyExam; dailyExam=function(d){ d=d||loadStorage(); const k=_de(d); if(k && !exIsSpec(k)) return k; return (d.exams||[]).find(x=>exOf(x)&&!exIsSpec(x)) || ''; }; })();
+try{ const d=loadStorage(); if(d.dexam && exIsSpec(d.dexam)){ d.dexam=(d.exams||[]).find(x=>exOf(x)&&!exIsSpec(x))||''; saveStorage(d); } }catch(e){}
+// Home: my exams first, then every exam anyone can take; subject-specific ones behind one button
+arrangeGrid=function(){
+  const g=document.getElementById('exam-grid'); if(!g) return;
+  const mine=(loadStorage().exams||[]).filter(exOf); const order=mine.concat(exGen().filter(k=>!mine.includes(k)));
+  const tiles=[...g.querySelectorAll('.ex-tile')]; const key=t=>(t.getAttribute('onclick')||'').replace(/^goExam\('|'\)$/g,'');
+  tiles.sort((a,b)=>{ const ia=order.indexOf(key(a)), ib=order.indexOf(key(b)); return (ia<0?99:ia)-(ib<0?99:ib); }).forEach(t=>g.appendChild(t));
+  tiles.forEach(t=>{ t.hidden=!order.includes(key(t)); });
+  let m=document.getElementById('ex-more'); if(!m){ m=document.createElement('div'); m.id='ex-more'; m.className='ex-more'; }
+  const n=EXAMS.filter(e=>exIsSpec(e.k)).length;
+  m.onclick=openAllExams; g.appendChild(m); m.classList.add('no-tr'); m.hidden=!n;
+  m.textContent=Lx('अन्य परीक्षाएँ — विषय विशेष','Other exams — subject-specific')+` (${n}) →`;
+};
+renderAllExams=function(){
+  ['ax-q','xp-q'].forEach(i=>{ const el=document.getElementById(i); if(el) el.placeholder=Lx('परीक्षा खोजें…','Search exam…'); });
+  const q=(document.getElementById('ax-q').value||'').trim(); const mine=loadStorage().exams||[]; const spec=e=>exIsSpec(e.k);
+  const cnt=a=>a.g.reduce((n,g)=>n+g.k.filter(k=>exOf(k)&&exIsSpec(k)).length,0);
+  document.getElementById('ax-tabs').innerHTML=[['',Lx('सभी','All')+` (${EXAMS.filter(spec).length})`]].concat(EX_GROUPS.filter(a=>cnt(a)).map(a=>[a.a,Lx(a.n[0],a.n[1])+` (${cnt(a)})`])).map(([k,t])=>`<div class="ca-chip ${AX_TAB===k?'active':''}" onclick="AX_TAB='${k}';renderAllExams()">${t}</div>`).join('');
+  document.getElementById('ax-list').innerHTML=exGroupsF(q,AX_TAB,e=>{ const on=mine.includes(e.k), pc=pyqCount(e.k);
+    return `<div class="ax-row" onclick="goExam('${e.k}')">${eic(e,38)}<div style="min-width:0"><b>${escH(exNameL(e.k))}</b><small>${escH(exSubL(e))}${exSubL(e)?' • ':''}${pc?pc+Lx(' पुराने पेपर',' old papers'):Lx('PYQ जल्द','PYQs soon')}</small></div><button class="ax-star ${on?'on':''}" onclick="event.stopPropagation();axToggleMine('${e.k}')">${on?Lx('✓ Home पर','✓ On Home'):Lx('+ Home पर','+ To Home')}</button></div>`; },spec)+'<div style="height:24px"></div>';
+};
+renderExamPick=function(){
+  const q=((document.getElementById('xp-q')||{}).value||'').trim();
+  const row=e=>{ const i=XP_SEL.indexOf(e.k); const main=XP_SEL.find(k=>!exIsSpec(k));
+    return `<div class="ax-row ${i>=0?'on':''}" onclick="xpToggle('${e.k}')">${eic(e,38)}<div style="min-width:0"><b>${escH(exNameL(e.k))}</b><small>${escH(exSubL(e))}</small></div><span class="ax-star ${i>=0?'on':''}">${i>=0?(e.k===main?Lx('✓ मुख्य','✓ Main'):'✓'):Lx('चुनें','Select')}</span></div>`; };
+  document.getElementById('xp-grid').innerHTML=
+    `<div class="xp-h">${Lx('सभी के लिए परीक्षाएँ','Exams anyone can take')}<small>${Lx('Topic Test, Full Test और पुराने प्रश्नपत्र','Topic test, full test and old papers')}</small></div>`+exGroupsF(q,'',row,e=>!exIsSpec(e.k))+
+    `<div class="xp-h">${Lx('विषय विशेष की परीक्षाएँ','Subject-specific exams')}<small>${Lx('विशेष उपाधि ज़रूरी • केवल पुराने प्रश्नपत्र','Specific degree required • old papers only')}</small></div>`+exGroupsF(q,'',row,e=>exIsSpec(e.k));
+};
+saveExamPick=function(){
+  if(!XP_SEL.length){ toast('कम से कम एक परीक्षा चुनें'); return; }
+  const d=loadStorage(); const old=dailyExam(d); const main=XP_SEL.find(k=>!exIsSpec(k))||'';
+  d.exams=XP_SEL.slice(); d.dexam=main; if(!d.exam || !XP_SEL.includes(d.exam)) d.exam=main||XP_SEL[0];
+  saveStorage(d);
+  if(main && old && old!==main) toast(Lx('मुख्य परीक्षा: ','Main exam: ')+exNameL(main));
+  if(XP_FIRST) goHome(); else goBack();
+};
+// subject-specific exam page: old papers + Exam INFO only (there is no subject question bank for topic / full tests)
+(function(){ const _se=setExam; setExam=function(name){ _se(name); const sp=exIsSpec(name);
+  [['tt-topic',sp],['tt-full',sp],['tt-syl',sp],['tt-only',!sp]].forEach(([id,h])=>{ const el=document.getElementById(id); if(el) el.hidden=h; }); }; })();
+(function(){ const _sf=startFullTest; startFullTest=function(){ if(exIsSpec(state.cur)){ startPYQ(); return; } return _sf.apply(this,arguments); }; })();
+GUIDES.allexams=[['अन्य परीक्षाएँ','Other exams'],['ये वे परीक्षाएँ हैं जिनमें किसी विषय विशेष की उपाधि ज़रूरी होती है (जैसे सहायक प्राध्यापक, विधि, इंजीनियरिंग, नर्सिंग)। ये एजेंसी के अनुसार बँटी हैं और इनमें केवल पुराने प्रश्नपत्र हैं। "+ Home पर" से परीक्षा Home पर आ जाएगी।','These exams need a degree in a specific subject (e.g. Assistant Professor, law, engineering, nursing). They are grouped by agency and have old papers only. "+ To Home" puts an exam on Home.']];
+GUIDES.home=[['होम','Home'],['• आज का क्विज़: रोज़ 10 नए प्रश्न — streak बनाएँ, साप्ताहिक लीडर बोर्ड में नाम लाएँ<br>• परीक्षा टाइल दबाकर Topic Test, Full Test या पुराना प्रश्नपत्र दें<br>• विषय विशेष की परीक्षाएँ (सहायक प्राध्यापक, इंजीनियरिंग, नर्सिंग…) "अन्य परीक्षाएँ" बटन में हैं','• Today\'s quiz: 10 new questions daily — keep your streak and climb the weekly leader board<br>• Tap an exam tile for a Topic test, Full test or an old paper<br>• Subject-specific exams (Assistant Professor, engineering, nursing…) are under "Other exams"']];
+Object.assign(UI_EN,{"अन्य परीक्षाएँ":"Other exams","विषय विशेष की उपाधि वाली • केवल पुराने प्रश्नपत्र":"Specific degree required • old papers only","परीक्षा चुनें":"Choose an exam","इस परीक्षा में विषय विशेष के प्रश्न आते हैं, इसलिए यहाँ केवल पुराने प्रश्नपत्र दिए गए हैं।":"This exam asks subject-specific questions, so only old papers are given here."});
 exRebuild();
 
 </script>
