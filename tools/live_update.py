@@ -77,6 +77,9 @@ def main(repo, latest):
     # papers hidden in the app for now (live/hide.json = list of paper-name fragments; edit that file to hide / bring back a paper)
     hide = jload(os.path.join(live, 'hide.json'), None)
     if isinstance(hide, list): man['hide'] = hide
+    # exam list additions / paper-name rules for the app (live/exams.json; see EXCFG_DEFAULT in index.html for the shape)
+    excfg = jload(os.path.join(live, 'exams.json'), None)
+    if isinstance(excfg, dict): man['exams'] = excfg
     with open(os.path.join(live, 'manifest.json'), 'w', encoding='utf-8') as f:
         json.dump(man, f, ensure_ascii=False, indent=1)
     # Explanations (exp / expe) changed vs the baseline -> one small file per chunk (xp-q-NN.json),

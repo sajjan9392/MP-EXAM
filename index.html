@@ -2411,7 +2411,7 @@ const EX_DEF={
 })();
 const EX_GROUPS=[
   {a:'MPPSC', n:['MPPSC','MPPSC'], f:['म.प्र. लोक सेवा आयोग','MP Public Service Commission'], g:[
-    {t:['राज्य स्तरीय सेवाएँ','State services'], k:['MPPSC','MPSFS']}]},
+    {id:'state', t:['राज्य सेवा / राज्य वन सेवा','State Service / State Forest Service'], k:['MPPSC','MPSFS']}]},
   {a:'ESB', n:['ESB','ESB'], f:['कर्मचारी चयन मण्डल (पूर्व व्यापम / PEB)','Employees Selection Board (formerly Vyapam / PEB)'], g:[
     {t:['समूह परीक्षाएँ (Group 1 से 5)','Group exams (Group 1 to 5)'], k:['Group 1','RAEO','Group 2B','Group 2 SG4','Sub Engineer','Assistant Grade 3','Group 5']},
     {t:['नाम से होने वाली परीक्षाएँ — वर्दी','Exams held by name — uniformed'], k:['Police Constable','ASI','Jail Prahari','Van Rakshak','Home Guard']},
@@ -2559,6 +2559,60 @@ function remToggle(){ const d=loadStorage(); d.remOff=!d.remOff; saveStorage(d);
 document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible') remSchedule(); });
 const _finishQuiz3=finishQuiz; finishQuiz=function(){ const r=_finishQuiz3.apply(this,arguments); try{ if(state.mode==='daily') setTimeout(remSchedule,800); }catch(e){} return r; };
 Object.assign(UI_EN,{"प्रश्न में गलती बताएँ":"Report a mistake","रद्द करें":"Cancel","भेजें":"Send","⚑ गलती बताएँ":"⚑ Report","रोज़ का रिमाइंडर":"Daily reminder","शाम 7 बजे":"7 PM","बंद":"Off"});
+
+
+// ===================== 21 Nov 2026: exam list from config (built-in + live "exams"); paper-name rules; no exam key is ever hidden =====================
+// MPPSC also holds subject-based exams (Assistant Professor, ADPO / law officer …): they are separate exams, not part of State Service.
+const BOOK_D='M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5zM4 20.5A2.5 2.5 0 0 0 6.5 23H20v-5';
+const EXCFG_DEFAULT={
+  groups:{ subj:{a:'MPPSC', t:['विषय आधारित परीक्षाएँ (स्नातक / स्नातकोत्तर)','Subject-based exams (graduate / postgraduate)']},
+           ent:{a:'ESB', t:['प्रवेश परीक्षाएँ','Entrance tests']}, other:{a:'ESB', t:['अन्य','Other']} },
+  add:[
+    {k:'Assistant professor', n:'सहायक प्राध्यापक', en:'Assistant Professor', s:'MPPSC • प्रश्नपत्र-I व विषय प्रश्नपत्र-II', se:'MPPSC • Paper I and subject Paper II', g:'subj', c:'#7C3AED', al:'assistant professor sahayak pradhyapak'},
+    {k:'ADPO', n:'सहायक जिला लोक अभियोजन अधिकारी', en:'Asst. District Public Prosecution Officer', s:'MPPSC • ADPO • विधि', se:'MPPSC • ADPO • Law', g:'subj', c:'#B45309', al:'adpo law officer vidhi lok abhiyojan'},
+    {k:'PHUNT', n:'PAHUNT', en:'PAHUNT', s:'पशुपालन डिप्लोमा प्रवेश परीक्षा', se:'Animal husbandry diploma entrance test', g:'ent', c:'#0D9488', al:'pahunt entrance pravesh'}],
+  rules:[['सहायक जिला लोक अभियोजन','ADPO'],['सहायक प्राध्यापक','Assistant professor'],['राज्य वन सेवा \\(मुख्य\\)','MPSFS']],
+  alias:{}
+};
+var PAPER_RULES=[]; const _ruleCache=new Map();
+function exGroupOf(id,def){ for(const ag of EX_GROUPS){ const g=ag.g.find(x=>x.id===id); if(g) return g; }
+  if(!def) return null; const ag=EX_GROUPS.find(x=>x.a===def.a)||EX_GROUPS[EX_GROUPS.length-1]; const g={id,t:def.t||[id,id],k:[]}; ag.g.push(g); return g; }
+function applyExamCfg(cfg){
+  if(!cfg) return;
+  Object.entries(cfg.groups||{}).forEach(([id,def])=>{ const g=exGroupOf(id,def); if(g&&def.t) g.t=def.t; });
+  Object.assign(EX_ALIAS,cfg.alias||{});
+  (cfg.add||[]).forEach(e=>{ if(!e||!e.k) return;
+    let x=exOf(e.k); if(!x){ x={k:e.k,n:e.n||e.k,s:e.s||'',c:e.c||'#475569',d:e.d||BOOK_D}; EXAMS.push(x); }
+    if(e.n) x.n=e.n; if(e.s!=null) x.s=e.s; if(e.c) x.c=e.c; if(e.d) x.d=e.d; if(e.al) x.al=e.al;
+    if(e.en){ EN_EX[e.k]=e.en; UI_EN[x.n]=e.en; } if(e.se) UI_EN[x.s]=e.se;
+    if(e.g){ EX_GROUPS.forEach(ag=>ag.g.forEach(g=>{ const i=g.k.indexOf(e.k); if(i>=0 && g.id!==e.g) g.k.splice(i,1); }));
+      const g=exGroupOf(e.g,(cfg.groups||{})[e.g]||EXCFG_DEFAULT.groups[e.g]||{a:'ESB',t:[e.g,e.g]}); if(g && !g.k.includes(e.k)) g.k.push(e.k); }
+  });
+  (cfg.rules||[]).forEach(r=>{ try{ PAPER_RULES.unshift([new RegExp(r[0]),r[1]]); }catch(e){} });
+  _ruleCache.clear(); if(typeof _pcCache==='object') for(const k in _pcCache) delete _pcCache[k];
+}
+(function(){ const _eo2=examsOf; examsOf=function(q){ const p=q.paper;
+  if(p){ let r=_ruleCache.get(p); if(r===undefined){ r=null; for(const [re,k] of PAPER_RULES){ if(re.test(p)){ r=[k]; break; } } _ruleCache.set(p,r); } if(r) return r; }
+  return _eo2(q); }; })();
+// any exam key present in the questions but unknown to the app gets its own entry (so new papers are never invisible),
+// and exams without a subject list get one from their questions
+function exDiscover(){
+  let added=false; const cnt={}; const subs={};
+  QUESTIONS.forEach(q=>{ const L=examsOf(q); for(let i=0;i<L.length;i++){ const k=L[i]; cnt[k]=(cnt[k]||0)+1; (subs[k]=subs[k]||new Set()).add(q.sub); } });
+  Object.keys(cnt).forEach(k=>{ if(!exOf(k)){ EXAMS.push({k,n:k,s:'',c:'#475569',d:BOOK_D}); const g=exGroupOf('other',EXCFG_DEFAULT.groups.other); if(!g.k.includes(k)) g.k.push(k); added=true; } });
+  TAX.exams=TAX.exams||{};
+  EXAMS.forEach(e=>{ if(!TAX.exams[e.k] && subs[e.k]){ TAX.exams[e.k]=SUB_ORDER.filter(x=>subs[e.k].has(x)).concat([...subs[e.k]].filter(x=>x&&!SUB_ORDER.includes(x))); added=true; } });
+  return added;
+}
+function exRebuild(){ try{ buildStatic(); arrangeGrid(); refreshHome(); if(document.getElementById('allexams').classList.contains('active')) renderAllExams(); }catch(e){} }
+applyExamCfg(EXCFG_DEFAULT);
+async function exCfgSync(){ try{ const man=await liveGet('manifest'); if(man && man.exams && JSON.stringify(man.exams)!==exCfgSync.last){ exCfgSync.last=JSON.stringify(man.exams); applyExamCfg(man.exams); return true; } }catch(e){} return false; }
+(function(){ const _la=liveApply; liveApply=async function(){ const c=await exCfgSync(); const r=await _la(); if(exDiscover()||c) exRebuild(); return r; }; })();
+(window.DATA_READY||Promise.resolve()).then(()=>{ try{ exDiscover(); exRebuild(); }catch(e){} });
+// old papers newest first by the exam year written in the paper name
+(function(){ const _pp=pyqPapers; pyqPapers=function(ex){ const L=_pp(ex); L.forEach(p=>{ const m=String(p.name).match(/(?:19|20)\d\d/); if(m) p.y=+m[0]; });
+  return L.sort((a,b)=>(b.y-a.y)||a.name.localeCompare(b.name)); }; })();
+exRebuild();
 
 </script>
 </body>
