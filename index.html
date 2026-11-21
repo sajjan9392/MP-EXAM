@@ -129,6 +129,8 @@ svg.i{display:block;flex-shrink:0}
 .daily-ic{width:48px;height:48px;border-radius:14px;background:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .daily-t{font-size:17px;font-weight:700}
 .daily-s{font-size:13px;opacity:.92}
+.daily-main{box-sizing:border-box;display:flex;justify-content:space-between;align-items:center;gap:10px;width:calc(100% - 32px);margin:8px 16px 0;padding:9px 14px;border:1px dashed var(--border,#CBD5E1);border-radius:12px;background:transparent;color:inherit;font:inherit;font-size:12.5px;text-align:left;opacity:.9}
+.daily-main .dm-ch{color:#2563EB;font-weight:700;white-space:nowrap}
 .daily.done{background:var(--green)}
 .sec-h{display:flex;justify-content:space-between;align-items:baseline;padding:22px 16px 10px;font-size:17px;font-weight:700;color:var(--fg)}
 .sec-h small{font-size:13px;color:var(--fg2);font-weight:500}
@@ -591,6 +593,7 @@ svg.i{display:block;flex-shrink:0}
       <div style="flex:1"><div class="daily-t" id="daily-t">आज का क्विज़</div><div class="daily-s" id="daily-s">10 प्रश्न • 10 मिनट • streak बनाए रखें</div></div>
       <svg class="i" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.4" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg>
     </button>
+    <button class="daily-main" id="daily-main" hidden onclick="openExamPick()"></button>
     <button class="lb-link" onclick="openLeader('daily')">🏆 साप्ताहिक लीडर बोर्ड देखें <span>›</span></button>
     <div class="install-bar" id="install-bar">
       <div class="install-text">App को Home Screen पर install करें — offline चलेगी</div>
@@ -1048,6 +1051,7 @@ function refreshHome(){
   card.classList.toggle('done', done);
   document.getElementById('daily-t').textContent = done ? 'आज का क्विज़ पूरा ✓' : 'आज का क्विज़';
   document.getElementById('daily-s').textContent = done ? `${d.dailyScore||0}/10 सही • कल नए प्रश्न • फिर से अभ्यास करें` : `10 प्रश्न • 10 मिनट • streak बनाए रखें`;
+  try{ const ex=dailyExam(d); const dm=document.getElementById('daily-main'); if(dm){ dm.hidden=!ex; if(ex) dm.innerHTML='<span>'+Lx('आज का क्विज़ इस परीक्षा के पैटर्न पर: ','Today\'s quiz follows the pattern of: ')+'<b class="no-tr">'+escH(exNameL(ex))+'</b></span><span class="dm-ch">'+Lx('बदलें','Change')+' ›</span>'; } }catch(e){}
   try{ updateExamRings(); }catch(e){}
   const cnt={wrong:(d.wrong||[]).length, bm:(d.bm||[]).length};
   document.getElementById('quick').innerHTML=QUICK.map(k=>`<div class="qa" style="color:${k.c}" onclick="${k.f}"><div class="qbg"></div>${ic(k.d,26,k.c)}<div class="qa-t">${k.t}</div><div class="qa-s">${k.s}</div>${k.n&&cnt[k.n]?`<div class="qa-n">${fmt(cnt[k.n])}</div>`:''}</div>`).join('');
@@ -1095,9 +1099,9 @@ function uniqQ(a){ const seen=new Set(); return a.filter(q=>{ const k=dkey(q); i
 let UQ=null,UQsrc=null,UQn=-1;
 function allUniq(){ if(UQsrc!==QUESTIONS||UQn!==QUESTIONS.length){ UQ=uniqQ(QUESTIONS); UQsrc=QUESTIONS; UQn=QUESTIONS.length; } return UQ; }
 setTimeout(()=>{ try{ allUniq(); }catch(e){} },5000);  // warm the duplicate keys in the background
-function poolFor(){ return uniqQ(QUESTIONS.filter(q=>state.selSt.has(tkey(q)))); }
+function poolFor(){ return uniqQ(QUESTIONS.filter(q=>state.selSt.has(tkey(q)) && !pyqOnly(q))); }
 function treeFor(exam){
-  const counts={}; allUniq().forEach(q=>{ const k=tkey(q); counts[k]=(counts[k]||0)+1; });
+  const counts={}; allUniq().forEach(q=>{ if(pyqOnly(q)) return; const k=tkey(q); counts[k]=(counts[k]||0)+1; });
   return examSubs(exam).map(sk=>{
     const def=(TAX.subjects||[]).find(v=>v.key===sk) || {key:sk,name:subName(sk),topics:[]};
     const topics=def.topics.map(([tn,sts])=>({name:tn, subs:sts.map(n=>({name:n}))}));
@@ -1197,7 +1201,7 @@ function diffOk(q){ const d=q.d||3; return setup.diff==='all' || (setup.diff==='
 function basePool(){
   if(state.mode==='topic') return poolFor();
   const subs=new Set(examSubs(state.cur));
-  return uniqQ(QUESTIONS.filter(q=>subs.has(q.sub)));
+  return uniqQ(QUESTIONS.filter(q=>subs.has(q.sub) && !pyqOnly(q)));
 }
 function updateSetupNote(){
   const el=document.getElementById('setup-note');
@@ -1231,6 +1235,22 @@ let PAPER_EN_Q=null;
 function paperLabel(n){ if(!n || UI_LANG!=='en') return n; if(!PAPER_EN_Q){ PAPER_EN_Q={}; try{ QUESTIONS.concat(CANCELQ).forEach(q=>{ if(q.paperEn){ const p=paperOf(q); if(p) PAPER_EN_Q[p]=q.paperEn; } }); }catch(e){} } return PAPER_EN_Q[n]||paperEn(n); }
 function paperOf(q){ return q.paper || (q.src==='MPPSC/MPSFS PYQ' && q.year ? 'MPPSC प्रारंभिक '+q.year : null); }
 function examsOf(q){ return q.exams || (q.src==='MPPSC/MPSFS PYQ' ? ['MPPSC','MPSFS'] : []); }
+// ---- PYQ reuse rules: subject-specific questions stay inside their own old paper ----
+var PYQ_ONLY_SUBS=new Set(['agri','comm','engg','psy','soc']);        // never reused outside the paper
+var SPEC_OK_SUBS=new Set(['hindi','eng','math','reason','mp']);        // only these are reused from a subject-specific exam's paper
+var SPEC_ALL_PYQ=new Set(['ADPO','Assistant professor','PHUNT']);      // whole paper is subject matter
+var _poCache=new Map();
+function pyqOnly(q){
+  const p=q.paper; if(!p) return false;
+  const key=p+'|'+q.sub; let v=_poCache.get(key);
+  if(v===undefined){
+    if(PYQ_ONLY_SUBS.has(q.sub)) v=true;
+    else { const ex=examsOf(q); const spec=ex.length>0 && typeof exIsSpec==='function' && ex.every(k=>exIsSpec(k));
+      v = spec && (ex.some(k=>SPEC_ALL_PYQ.has(k)) || !SPEC_OK_SUBS.has(q.sub)); }
+    _poCache.set(key,v);
+  }
+  return v;
+}
 function pyqPapers(exam){
   const m={};
   QUESTIONS.concat(CANCELQ).forEach(q=>{ const p=paperOf(q); if(!p || !examsOf(q).includes(exam)) return; (m[p]=m[p]||{name:p,n:0,y:q.year||0}).n++; });
@@ -1294,11 +1314,18 @@ const FULL_MIX = {
   'Van Rakshak':[[GK,30],[['sci','env'],15],[['math'],15],[['reason'],15],[['hindi'],15],[['eng'],10]],
   'Jail Prahari':[[GK,30],[['sci'],15],[['math'],15],[['reason'],15],[['hindi'],15],[['eng'],10]]
 };
+// Daily quiz weightage for exams that have no Full-test pattern above (from the general part of their old papers)
+const DAILY_MIX = {
+  'Group 2 SG4':[[GK,25],[['math'],20],[['comp'],15],[['hindi'],15],[['eng'],10],[['sci'],8],[['reason'],7]],
+  'Assistant Grade 3':[[GK,20],[['comp'],20],[['math'],20],[['hindi'],15],[['eng'],15],[['reason'],10]],
+  'Home Guard':[[GK,30],[['hindi'],25],[['eng'],15],[['math'],10],[['reason'],10],[['sci'],10]]
+};
+function dailyMix(exam){ return FULL_MIX[exam] || DAILY_MIX[exam] || null; }
 function fullMixList(exam,total){
   const mix=FULL_MIX[exam]; if(!mix) return null;
   const out=[];
   mix.forEach(([subs,n])=>{
-    const by=subs.map(sb=>uniqQ(shuffle(QUESTIONS.filter(q=>q.sub===sb && !q.paper && diffOk(q))))).filter(a=>a.length);
+    const by=subs.map(sb=>uniqQ(shuffle(QUESTIONS.filter(q=>q.sub===sb && !pyqOnly(q) && diffOk(q))))).filter(a=>a.length);
     // share n equally among the subjects of this section; leftovers from small subjects go to bigger ones
     let need=n, i=0, guard=0;
     while(need>0 && by.some(a=>a.length) && guard<10000){ const a=by[i%by.length]; if(a.length){ out.push(a.pop()); need--; } i++; guard++; }
@@ -1319,14 +1346,26 @@ function launchQuiz(count, minutes){
 function seededRng(str){ let h=1779033703^str.length; for(let i=0;i<str.length;i++){ h=Math.imul(h^str.charCodeAt(i),3432918353); h=h<<13|h>>>19; } return function(){ h=Math.imul(h^h>>>16,2246822507); h=Math.imul(h^h>>>13,3266489909); h^=h>>>16; return (h>>>0)/4294967296; }; }
 function startDaily(day){
   const d=loadStorage(); const ex=dailyExam(d); const dk=(typeof day==='string'&&day)||isoLocal();
-  const subs=new Set(ex?examSubs(ex):[]);
-  const pool=uniqQ(QUESTIONS.filter(q=>(!subs.size||subs.has(q.sub)) && q.opts && q.opts.length>=2));
+  const subs=new Set(ex?examSubs(ex):[]); const mix=ex?dailyMix(ex):null;
+  if(mix) mix.forEach(m=>m[0].forEach(k=>subs.add(k)));
+  const pool=uniqQ(QUESTIONS.filter(q=>(!subs.size||subs.has(q.sub)) && q.opts && q.opts.length>=2 && !pyqOnly(q)));
   if(!pool.length){ toast('प्रश्न लोड हो रहे हैं…'); return; }
   const rnd=seededRng((dk===isoLocal()?todayS():new Date(dk+'T00:00:00').toDateString())+'|'+ex);
-  // pick from different subjects in turn so the quiz is mixed
   const by={}; pool.forEach(q=>{ (by[q.sub]=by[q.sub]||[]).push(q); });
-  const keys=Object.keys(by).sort(); const out=[]; let guard=0;
-  while(out.length<10 && guard<200){ const k=keys[guard%keys.length]; const a=by[k]; if(a.length){ const q=a[Math.floor(rnd()*a.length)]; if(!out.includes(q)) out.push(q); } guard++; }
+  let out=[];
+  const secs=mix ? mix.map(([sb,w])=>({subs:sb.filter(k=>by[k]&&by[k].length).sort(), w})).filter(x=>x.subs.length) : [];
+  if(secs.length){
+    // same share of each subject as in the real paper: whole part first, the rest by a date-seeded draw
+    const W=secs.reduce((a,x)=>a+x.w,0); let left=10;
+    secs.forEach(x=>{ const e=x.w*10/W; x.n=Math.floor(e); x.f=e-x.n; left-=x.n; });
+    let guard=0;
+    while(left>0 && guard++<50){ const c=secs.filter(x=>x.f>0); if(!c.length) break; const tot=c.reduce((a,x)=>a+x.f,0); let r=rnd()*tot, pick=c[c.length-1];
+      for(const x of c){ r-=x.f; if(r<=0){ pick=x; break; } } pick.n++; pick.f=0; left--; }
+    secs.forEach(x=>{ let g=0; let n=x.n; while(n>0 && g++<100){ const a=by[x.subs[Math.floor(rnd()*x.subs.length)]]; const q=a[Math.floor(rnd()*a.length)]; if(!out.includes(q)){ out.push(q); n--; } } });
+  }
+  // no pattern known (or too few questions): different subjects in turn
+  const keys=Object.keys(by).sort(); let guard2=0;
+  while(out.length<10 && guard2<200){ const k=keys[guard2%keys.length]; const a=by[k]; if(a.length){ const q=a[Math.floor(rnd()*a.length)]; if(!out.includes(q)) out.push(q); } guard2++; }
   state.mode='daily'; state.cur=ex||'MP'; state.dailyDate=dk;
   try{ const o=lbLocal(); o.dq[dk]=1; lbSave(o); }catch(e){}
   beginQuiz(out, 10);
@@ -2611,7 +2650,7 @@ function exDiscover(){
   EXAMS.forEach(e=>{ if(!TAX.exams[e.k] && subs[e.k]){ TAX.exams[e.k]=SUB_ORDER.filter(x=>subs[e.k].has(x)).concat([...subs[e.k]].filter(x=>x&&!SUB_ORDER.includes(x))); added=true; } });
   return added;
 }
-function exRebuild(){ try{ buildStatic(); arrangeGrid(); refreshHome(); if(document.getElementById('allexams').classList.contains('active')) renderAllExams(); }catch(e){} }
+function exRebuild(){ try{ _poCache.clear(); UQ=null; UQn=-1; }catch(e){} try{ buildStatic(); arrangeGrid(); refreshHome(); if(document.getElementById('allexams').classList.contains('active')) renderAllExams(); }catch(e){} }
 applyExamCfg(EXCFG_DEFAULT);
 async function exCfgSync(){ try{ const man=await liveGet('manifest'); if(man && man.exams && JSON.stringify(man.exams)!==exCfgSync.last){ exCfgSync.last=JSON.stringify(man.exams); applyExamCfg(man.exams); return true; } }catch(e){} return false; }
 (function(){ const _la=liveApply; liveApply=async function(){ const c=await exCfgSync(); const r=await _la(); if(exDiscover()||c) exRebuild(); return r; }; })();
