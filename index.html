@@ -965,6 +965,8 @@ function fmt(n){ return (n||0).toLocaleString('en-IN'); }
 function go(id){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
+  // opening Current Affairs: look for new news if the last check is older than 10 minutes
+  if(id==='ca'){ try{ const l=+(localStorage.getItem('ps_live_t')||0); if(Date.now()-l>600000) liveCheck(true); }catch(e){} }
 }
 
 // ===== ICONS / EXAMS =====
@@ -1895,7 +1897,7 @@ function confetti(N){
 // New current affairs + corrected/new questions arrive without a new APK.
 // Source: public repo folder live/ (manifest.json lists files with a hash).
 const LIVE_BASE='https://raw.githubusercontent.com/sajjan9392/mp-exam/main/live/';
-const LIVE_EVERY=3*3600*1000;   // check at most every 3 hours
+const LIVE_EVERY=3600*1000;   // check at most every hour (and when the Current Affairs page is opened, see go())
 const LIVE={db:null};
 function liveDB(){
   if(LIVE.db) return Promise.resolve(LIVE.db);
