@@ -1,9 +1,9 @@
 {
- "updated": "2026-11-20",
+ "updated": "2026-11-21",
  "files": {
-  "qpatch.json": "91e33b6a8319",
-  "ca-2026-11.json": "712b3b561595",
-  "ca-index.json": "1cc4ebb98f1a"
+  "qpatch.json": "043072ee5fa3",
+  "ca-2026-11.json": "6737b639252e",
+  "ca-index.json": "68cb47aaed5b"
  },
  "imgs": [
   "P12804.webp",
@@ -53,7 +53,14 @@
   "P19647.webp",
   "P19650.webp",
   "P19842.webp",
-  "P19906.webp"
+  "P19906.webp",
+  "P20067.webp",
+  "P20069.webp",
+  "P20089.webp",
+  "P20289.webp",
+  "P20489.webp",
+  "P20758.webp",
+  "P20998.webp"
  ],
  "hide": [
   "दुग्ध संघ (Dairy Federation) भर्ती परीक्षा 2016 (28 फरवरी, 09:00 AM, Slot 1)",
