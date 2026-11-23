@@ -1,24 +1,38 @@
-# Pariksha Sarthi — Telegram channel par roz 5 Current Affairs quiz
-# Roz subah ~7:53 IST: sabse naye din ke CA se 5 quiz + app ka link channel par post hota hai.
-# Naya CA na mile to purane CA se 5 "Revision" quiz jate hain.
-# Haath se bhi chala sakte hain: Actions → Telegram quiz → Run workflow.
+# Pariksha Sarthi — Telegram channel par roz Current Affairs: 3 news card + app card (album), phir 5 quiz
+# Roz subah ~7:53 IST: sabse naye din ke CA se 3 khabron ke card (MP, rashtriya, antarrashtriya) + app ka card,
+# uske baad 5 quiz + app ka link channel par post hota hai. Naya CA na mile to card nahi jate, purane CA se "Revision" quiz jate hain.
+# Haath se bhi chala sakte hain: Actions → Telegram quiz → Run workflow (kya bhejna hai chun sakte hain).
 # Secret chahiye: TELEGRAM_BOT_TOKEN (BotFather ka token). Bot channel ka admin hona chahiye (Post/Manage Messages).
 name: Telegram quiz
 on:
   schedule:
     - cron: '23 2 * * *'
   workflow_dispatch:
+    inputs:
+      what:
+        description: 'Kya bhejna hai'
+        type: choice
+        default: all
+        options: [all, cards, quiz]
 jobs:
   quiz:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+    env:
+      TG_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      TG_CHAT: '@PARIKSHASARTHIMPEXAMSPREP'
+      WHAT: ${{ github.event.inputs.what || 'all' }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with: { python-version: '3.12' }
+      - name: Send news cards
+        if: env.WHAT != 'quiz'
+        continue-on-error: true   # card me dikkat ho to bhi quiz jaye
+        run: |
+          pip install -q pillow
+          python3 tools/telegram_cards.py
       - name: Send quiz
-        env:
-          TG_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          TG_CHAT: '@PARIKSHASARTHIMPEXAMSPREP'
+        if: env.WHAT != 'cards'
         run: python3 tools/telegram_quiz.py
