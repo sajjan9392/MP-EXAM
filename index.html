@@ -171,6 +171,7 @@ svg.i{display:block;flex-shrink:0}
 .lb-days{display:flex;gap:8px;flex-wrap:wrap;margin:0 16px}
 .lb-win{display:flex;align-items:center;gap:12px;margin:12px 16px 0;padding:12px 14px;border-radius:16px;background:linear-gradient(135deg,#FEF3C7,#FDE68A);color:#78350F;border:1px solid #F59E0B}
 .lb-win .lbw-ic{font-size:30px}.lb-win .lbw-t{flex:1;min-width:0;display:flex;flex-direction:column}.lb-win small{font-size:12px;font-weight:700;opacity:.85}.lb-win b{font-size:16px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.lb-win .lbw-t>span{font-size:12px;opacity:.8}.lb-win .lbw-p{font-size:22px;font-weight:800}
+.home-win{cursor:pointer;margin:14px 16px 0}
 .lb-list{margin:12px 16px 16px;overflow:hidden}
 .lb-row{display:flex;align-items:center;gap:12px;padding:10px 14px;border-top:1px solid var(--line)}
 .lb-row:first-child{border-top:none}
@@ -596,6 +597,7 @@ svg.i{display:block;flex-shrink:0}
       <svg class="i" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.4" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg>
     </button>
     <button class="daily-main" id="daily-main" hidden onclick="openExamPick()"></button>
+    <div id="home-win" class="lb-win home-win" hidden onclick="openLeader(this.dataset.t||'daily')"></div>
     <button class="lb-link" onclick="openLeader('daily')">🏆 साप्ताहिक लीडर बोर्ड देखें <span>›</span></button>
     <div class="install-bar" id="install-bar">
       <div class="install-text">App को Home Screen पर install करें — offline चलेगी</div>
@@ -972,6 +974,7 @@ function go(id){
   document.getElementById(id).classList.add('active');
   // opening Current Affairs: look for new news if the last check is older than 10 minutes
   if(id==='ca'){ try{ const l=+(localStorage.getItem('ps_live_t')||0); if(Date.now()-l>600000) liveCheck(true); }catch(e){} }
+  if(id==='home'){ try{ homeWinner(); }catch(e){} }
 }
 
 // ===== ICONS / EXAMS =====
@@ -1860,7 +1863,7 @@ if('serviceWorker' in navigator && location.protocol.startsWith('http') && !(win
 }
 
 // ===== INIT =====
-buildStatic(); renderHomeCA();
+buildStatic(); renderHomeCA(); setTimeout(homeWinner,1500);
 setTimeout(()=>{
   const d = loadStorage();
   if(d.name){ go('home'); }
@@ -2189,13 +2192,31 @@ function lbSlug(s){ return String(s||'MP').replace(/[^A-Za-z0-9]+/g,'_').slice(0
 function lbExam(){ return dailyExam()||'MP'; }
 function lbBoardAt(t,off){ const w=isoLocal(lbMonday(off)); return t==='ca' ? 'C-'+w : 'D-'+w+'-'+lbSlug(lbExam()); }
 const LB_WIN={};
+async function lbWinData(t,db){
+  const id=lbBoardAt(t,-1);
+  if(!(id in LB_WIN)){ const sn=await db.collection('lb').doc(id).collection('u').orderBy('pts','desc').limit(5).get(); const r=[]; sn.forEach(d=>r.push(d.data())); LB_WIN[id]=r.filter(z=>z.pts>0&&z.pts===r[0].pts); }
+  return LB_WIN[id];
+}
+function lbWinHTML(w,tag){
+  const s=lbMonday(-1), e=lbMonday(0); e.setDate(e.getDate()-1);
+  return `<div class="lbw-ic">🏆</div><div class="lbw-t"><small>पिछले सप्ताह के विजेता <span class="no-tr">• ${tag?tag+' • ':''}${lbShort(s)} – ${lbShort(e)}</span></small>${w.slice(0,3).map(z=>`<b class="no-tr">${lbEsc(z.n)}</b><span class="no-tr">${lbEsc(z.dist)}</span>`).join('')}</div><div class="lbw-p no-tr">${w[0].pts}</div>`;
+}
 async function lbWinner(t,db){
-  const el=document.getElementById('lb-win'); if(!el) return; const id=lbBoardAt(t,-1);
-  try{ if(!(id in LB_WIN)){ const sn=await db.collection('lb').doc(id).collection('u').orderBy('pts','desc').limit(5).get(); const r=[]; sn.forEach(d=>r.push(d.data())); LB_WIN[id]=r.filter(z=>z.pts>0&&z.pts===r[0].pts); }
-    const w=LB_WIN[id]; if(LB.tab!==t||!document.getElementById('lb-win')) return; if(!w.length){ el.hidden=true; return; }
-    const s=lbMonday(-1), e=lbMonday(0); e.setDate(e.getDate()-1);
-    el.innerHTML=`<div class="lbw-ic">🏆</div><div class="lbw-t"><small>पिछले सप्ताह के विजेता <span class="no-tr">• ${lbShort(s)} – ${lbShort(e)}</span></small>${w.slice(0,3).map(z=>`<b class="no-tr">${lbEsc(z.n)}</b><span class="no-tr">${lbEsc(z.dist)}</span>`).join('')}</div><div class="lbw-p no-tr">${w[0].pts}</div>`; el.hidden=false;
+  const el=document.getElementById('lb-win'); if(!el) return;
+  try{ const w=await lbWinData(t,db); if(LB.tab!==t||!document.getElementById('lb-win')) return; if(!w.length){ el.hidden=true; return; }
+    el.innerHTML=lbWinHTML(w); el.hidden=false;
   }catch(e){ console.log('lbw',e); }
+}
+// home page: last week's winner (daily quiz of the student's exam; CA test if none). Cached per week so it shows instantly / offline.
+async function homeWinner(){
+  const el=document.getElementById('home-win'); if(!el) return; const EN=(typeof UI_LANG!=='undefined'&&UI_LANG==='en');
+  const show=(c)=>{ if(!c||!c.w||!c.w.length){ el.hidden=true; return; } el.dataset.t=c.t; el.innerHTML=lbWinHTML(c.w, c.t==='ca'?(EN?'CA test':'CA टेस्ट'):exName(lbExam())); el.hidden=false; };
+  const key=lbBoardAt('daily',-1); let c=null; try{ c=JSON.parse(localStorage.getItem('ps_lbwin')||'null'); }catch(e){}
+  if(c&&c.key===key){ show(c); return; }
+  el.hidden=true; if(!navigator.onLine) return;
+  try{ const {db}=await lbInit(); let t='daily', w=await lbWinData('daily',db); if(!w.length){ t='ca'; w=await lbWinData('ca',db); }
+    c={key,t,w:w.slice(0,3).map(z=>({n:z.n,dist:z.dist,pts:z.pts}))}; try{ localStorage.setItem('ps_lbwin',JSON.stringify(c)); }catch(e){} show(c);
+  }catch(e){ console.log('homewin',e); }
 }
 function lbBoard(t){ return t==='ca' ? 'C-'+lbWk() : 'D-'+lbWk()+'-'+lbSlug(lbExam()); }
 function lbLocal(){ let o={}; try{ o=JSON.parse(localStorage.getItem('ps_lb')||'{}'); }catch(e){} if(o.wk!==lbWk()){ o={prof:o.prof,topic:o.topic,wk:lbWk(),daily:{},dq:{},ca:null}; } return o; }
