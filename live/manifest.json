@@ -1,9 +1,9 @@
 {
- "updated": "2026-11-24",
+ "updated": "2026-11-25",
  "files": {
-  "qpatch.json": "b21482620a0e",
-  "ca-2026-11.json": "c50d243f7b48",
-  "ca-index.json": "c531925136b2"
+  "qpatch.json": "0f9e50184537",
+  "ca-2026-11.json": "ed820d2da212",
+  "ca-index.json": "826bd8846135"
  },
  "imgs": [
   "P12804.webp",
