@@ -24,6 +24,7 @@ if not ADMIN:
         c = m.get('chat') or {}
         if c.get('type') == 'private':
             seen[c['id']] = (c.get('first_name', '') + ' ' + c.get('last_name', '')).strip() + ' @' + (c.get('username') or '')
+    print('Bot:', '@' + (tg('getMe').get('result') or {}).get('username', '?'))
     print('TG_ADMIN not set. Private chats that messaged the bot:')
     for k, v in seen.items(): print(' ', k, v)
     if not seen: print('  (none — send "Hi" to the bot in Telegram and run again)')
