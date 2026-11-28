@@ -1,0 +1,31 @@
+# Pariksha Sarthi — रोज़ सुबह "गलती बताएँ" रिपोर्ट आपके Telegram (निजी चैट) पर
+# Secrets: FCM_SERVICE_ACCOUNT (Firestore पढ़ने के लिए), TELEGRAM_BOT_TOKEN; Variable: TG_ADMIN (आपकी Telegram chat id)
+# TG_ADMIN न हो तो run के log में bot को message करने वालों की chat id दिखती है।
+name: Report digest
+on:
+  schedule:
+    - cron: '40 2 * * *'   # 08:10 IST
+  workflow_dispatch:
+    inputs:
+      days: { description: 'कितने दिन की रिपोर्ट', required: false, default: '1.05' }
+jobs:
+  digest:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.12' }
+      - name: Send digest
+        env:
+          SA: ${{ secrets.FCM_SERVICE_ACCOUNT }}
+          TG_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TG_ADMIN: ${{ vars.TG_ADMIN }}
+          DAYS: ${{ github.event.inputs.days }}
+        run: |
+          pip install -q google-auth requests
+          python3 tools/reports.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: { name: reports, path: reports.json, if-no-files-found: ignore, retention-days: 30 }
